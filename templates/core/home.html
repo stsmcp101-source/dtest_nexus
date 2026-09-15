@@ -1,0 +1,240 @@
+{% extends "base/public_base.html" %}
+{% load static %}
+
+{% block content %}
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      {% include "components/logo.html" with css_class="logo-mark" grad_id="hexSplitNav" %}
+      <div class="brand-lockup">
+        <span class="brand-word">dTest<span class="dot">.</span><span class="nex">nexus</span></span>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <div class="nav-item">
+        <a href="#modules">เมนู</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#modules">ดูเมนูทั้งหมด</a>
+              {% for module in modules %}
+              <a href="{% if module.is_available and module.url_name %}{% url module.url_name %}{% else %}#modules{% endif %}">{{ module.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#org">โครงสร้างองค์กร</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#org">กลุ่มงานหลัก</a>
+              {% for group in org_groups %}
+              <a href="#org">{{ group }}</a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#standards">มาตรฐาน</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#standards">มาตรฐานการทดสอบ</a>
+              <a href="#standards">EGAT No.5</a>
+              <a href="#standards">มอก. (TISI)</a>
+              <a href="#standards">AHRI</a>
+              <a href="#standards">ISO/IEC 17025</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#about">เกี่ยวกับเรา</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#about">จุดเด่นของระบบ</a>
+              <a href="#about">รวมข้อมูลไว้ที่เดียว</a>
+              <a href="#about">ปลอดภัยและตรวจสอบได้</a>
+              <a href="#about">ใช้งานง่ายทุกแผนก</a>
+              <a href="#about">อัปเดตแบบเรียลไทม์</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="nav-cta">
+      {% if user.is_authenticated %}
+        <a class="btn btn-ghost-light" href="{% url 'documents:list' %}" style="padding:10px 20px;font-size:13.5px;">{{ user.get_full_name|default:user.username }}</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost-light" style="padding:10px 20px;font-size:13.5px;">ออกจากระบบ</button>
+        </form>
+      {% else %}
+        <a class="btn btn-ghost-light" href="{% url 'login' %}" style="padding:10px 20px;font-size:13.5px;">เข้าสู่ระบบ</a>
+      {% endif %}
+      <button class="nav-toggle" aria-label="menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner wrap">
+    <div class="hero-clouds" aria-hidden="true">
+      <span class="cloud c1"></span>
+      <span class="cloud c2"></span>
+      <span class="cloud c3"></span>
+      <span class="cloud c4"></span>
+    </div>
+    {% include "components/logo.html" with css_class="hero-logo" grad_id="hexSplitHero" %}
+    <div class="hero-wordmark">dTest<span class="dot">.</span><span class="nex">nexus</span></div>
+    <span class="eyebrow mono">[ DEVELOPMENT&nbsp;&nbsp;TEST ]</span>
+  </div>
+
+  <div class="hero-giant">dTest.nexus</div>
+
+  <div class="stats-strip wrap">
+    <div class="stats-label mono">[ ใช้งานจริงในทุกแผนกขององค์กร ]</div>
+    <div class="stats-row">
+      <div class="stat"><b>500+</b><span>พนักงานในแผนก</span></div>
+      <div class="stat"><b>{{ org_groups|length }}</b><span>กลุ่มงาน</span></div>
+      <div class="stat"><b>{{ modules|length }}</b><span>เมนูหลัก</span></div>
+      <div class="stat"><b>{{ document_count }}</b><span>เอกสารในระบบ</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow mono">[ เกี่ยวกับเรา ]</span>
+      <h2>เกี่ยวกับ <span class="accent">dTest.nexus</span></h2>
+      <p>สายงานพัฒนาและขยายผลิตภัณฑ์เครื่องปรับอากาศมีเอกสารและข้อมูลกระจายอยู่หลายระบบ dTest.nexus ถูกออกแบบมาเพื่อรวมงานเหล่านั้นให้ใช้งานง่ายขึ้น โปร่งใสขึ้น และติดตามได้จริง</p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        <h3>รวมข้อมูลไว้ที่เดียว</h3>
+        <p>ไม่ต้องสลับหลายระบบสำหรับงานเอกสาร บุคคล และใบรับรองอีกต่อไป</p>
+      </div>
+      <div class="feat">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+        <h3>ปลอดภัยและตรวจสอบได้</h3>
+        <p>ทุกการเข้าถึงข้อมูลถูกบันทึกและจำกัดสิทธิ์ตามบทบาทของผู้ใช้งาน</p>
+      </div>
+      <div class="feat">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.9 3.1-6 7-6s7 2.1 7 6"/></svg>
+        <h3>ใช้งานง่ายทุกแผนก</h3>
+        <p>ออกแบบมาให้ทุกทีมเข้าถึงเครื่องมือที่ต้องใช้ได้ทันทีโดยไม่ต้องอบรมนาน</p>
+      </div>
+      <div class="feat">
+        <svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 17l5-6 4 4 8-9"/><path d="M15 6h5v5"/></svg>
+        <h3>อัปเดตแบบเรียลไทม์</h3>
+        <p>ติดตามสถานะและความเคลื่อนไหวขององค์กรผ่านแดชบอร์ดได้ตลอดเวลา</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="modules">
+  <div class="wrap">
+    <div class="modules-panel">
+      <div class="modules-head">
+        <span class="eyebrow mono">[ เมนูการใช้งาน ]</span>
+        <h2>เมนูทั้งหมดของ dTest.nexus</h2>
+        <p>เลือกเข้าใช้งานเมนูที่ตรงกับงานของคุณ ทุกเมนูเชื่อมข้อมูลถึงกันเพื่อให้ภาพรวมองค์กรครบถ้วนในที่เดียว</p>
+      </div>
+
+      <div class="modules-grid">
+        {% for module in modules %}
+        <a class="module-card {% if not module.is_available %}is-disabled{% endif %}"
+           href="{% if module.is_available and module.url_name %}{% url module.url_name %}{% else %}#{% endif %}">
+          <svg class="m-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">{{ module.icon_svg_path|default:"<circle cx='12' cy='12' r='9'/>"|safe }}</svg>
+          <div class="m-tag mono">MENU {{ forloop.counter|stringformat:"02d" }} — {{ module.short_tag }}</div>
+          <h3>{{ module.name }}</h3>
+          <p>{{ module.description }}</p>
+          <span class="go">{% if module.is_available %}เปิดใช้งาน →{% else %}เร็ว ๆ นี้{% endif %}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="org">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>โครงสร้างองค์กร <span class="accent">7 กลุ่มงานหลัก</span></h2>
+      <p>หน่วยงานหลักที่ขับเคลื่อนการดำเนินงานขององค์กร (อยู่ระหว่างจัดทำรายละเอียดเพิ่มเติม)</p>
+    </div>
+    <div class="org-grid">
+      {% for group in org_groups %}
+      <div class="org-box"><span class="org-code mono">{{ group }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section id="standards">
+  <div class="wrap">
+    <div class="standards">
+      <div class="standards-head">
+        <span class="eyebrow mono" style="color:var(--blue-400);">[ มาตรฐานการทดสอบ ]</span>
+        <h2>ยึดมั่นในมาตรฐานที่ <span class="accent" style="color:var(--blue-400);">ชัดเจนกว่า</span></h2>
+        <p>dTest.nexus อ้างอิงมาตรฐานการทดสอบเครื่องปรับอากาศระดับสากล เพื่อความแม่นยำและน่าเชื่อถือของผลการทดสอบ</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar-logo"><img src="{% static 'img/standards/egat-no5.png' %}" alt="EGAT No.5"></div>
+        <div class="pillar-logo"><img src="{% static 'img/standards/tisi.png' %}" alt="มอก. (TISI)"></div>
+        <div class="pillar-logo"><img src="{% static 'img/standards/ahri.png' %}" alt="AHRI"></div>
+        <div class="pillar-logo"><img src="{% static 'img/standards/ilac-nsc.png' %}" alt="ISO/IEC 17025"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>พร้อมเริ่มใช้งาน dTest.nexus แล้วหรือยัง</h2>
+      <p>เข้าสู่ระบบเพื่อเริ่มจัดการงานเอกสาร บุคคล และเมนูอื่น ๆ ขององค์กรได้ทันที</p>
+      <div class="hero-actions">
+        {% if user.is_authenticated %}
+          <a class="btn btn-white" href="{% url 'documents:list' %}">เข้าใช้งานระบบ</a>
+        {% else %}
+          <a class="btn btn-white" href="{% url 'login' %}">เข้าสู่ระบบ</a>
+        {% endif %}
+        <a class="btn btn-ghost-dark" href="#modules">ดูเมนูทั้งหมด</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot-standards">
+      <span class="fs-label">ได้รับการรับรองตามมาตรฐาน</span>
+      <div class="fs-logos">
+        <a class="fs-logo fs-egat" href="https://labelno5.egat.co.th/home/labelno5/" target="_blank" rel="noopener" title="EGAT No.5 — ประหยัดไฟเบอร์ 5">
+          <img src="{% static 'img/standards/egat-no5.png' %}" alt="EGAT No.5">
+        </a>
+        <a class="fs-logo fs-tisi" href="https://www.tisi.go.th/website/standardlist/comp_thai/th" target="_blank" rel="noopener" title="มอก. — มาตรฐานผลิตภัณฑ์อุตสาหกรรม">
+          <img src="{% static 'img/standards/tisi.png' %}" alt="มอก.">
+        </a>
+        <span class="fs-logo fs-iso" title="ILAC-MRA / NSC-TISI-TIS 17025 Calibration">
+          <img src="{% static 'img/standards/ilac-nsc.png' %}" alt="ILAC-MRA / NSC-TISI-TIS 17025 Calibration">
+        </span>
+        <a class="fs-logo fs-ahri" href="https://www.ahrinet.org/search-standards/ahri-210240-i-p-performance-rating-unitary-air-conditioning-and-air-source-heat-pump-equipment" target="_blank" rel="noopener" title="AHRI Certified">
+          <img src="{% static 'img/standards/ahri.png' %}" alt="AHRI">
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-giant">dTest.nexus</div>
+  <div class="foot-bottom">© {% now "Y" %} dTest.nexus — Air Conditioning Development &amp; Scalability Platform · สงวนลิขสิทธิ์</div>
+</footer>
+{% endblock %}

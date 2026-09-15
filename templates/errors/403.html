@@ -1,0 +1,6 @@
+{% extends "errors/_error_base.html" %}
+{% block content %}
+{% with error_code="403" error_title="ไม่มีสิทธิ์เข้าถึง" error_message="คุณไม่มีสิทธิ์เพียงพอสำหรับการเข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบหากคิดว่านี่เป็นข้อผิดพลาด" %}
+{{ block.super }}
+{% endwith %}
+{% endblock %}

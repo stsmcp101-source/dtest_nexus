@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+{% load perms %}
+{% block title %}{{ document.document_code }} — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">{{ document.document_name }} <span class="tag">{{ document.document_code }}</span></h1>
+      <p class="page-desc">{{ document.description|default:"ไม่มีคำอธิบายเพิ่มเติม" }}</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost btn-app" href="{% url 'documents:list' %}">← กลับไปหน้า Document Data</a>
+    <a class="btn-open" href="{% url 'documents:open' document.pk %}" target="_blank" rel="noopener noreferrer">Open</a>
+    {% has_perm "document.download" as can_download %}
+    {% if can_download %}<a class="btn-download" href="{% url 'documents:download' document.pk %}">Download</a>{% endif %}
+    {% has_perm "document.edit" as can_edit %}
+    {% if can_edit %}<a class="btn-edit" href="{% url 'documents:edit' document.pk %}">Edit</a>{% endif %}
+    {% has_perm "document.delete" as can_delete %}
+    {% if can_delete %}<a class="btn-delete" href="{% url 'documents:delete' document.pk %}">Delete</a>{% endif %}
+  </div>
+</div>
+
+<div class="detail-panel">
+  <div class="detail-grid">
+    <div class="detail-field"><div class="lbl">รหัสเอกสาร</div><div class="val mono">{{ document.document_code }}</div></div>
+    <div class="detail-field"><div class="lbl">หมวดหมู่</div><div class="val"><span class="tag {% if document.category.code == 'dev' %}tag-dev{% else %}tag-mass{% endif %}">{{ document.category.name }}</span></div></div>
+    <div class="detail-field"><div class="lbl">แหล่งที่มา</div><div class="val">{{ document.source.name }}</div></div>
+    {% if document.external_url %}
+      <div class="detail-field"><div class="lbl">ลิงก์</div><div class="val"><a href="{{ document.external_url }}" target="_blank" rel="noopener noreferrer">{{ document.external_url }}</a></div></div>
+    {% endif %}
+    <div class="detail-field"><div class="lbl">ประเภทไฟล์</div><div class="val mono">{{ document.file_type|upper|default:"—" }}</div></div>
+    <div class="detail-field"><div class="lbl">ขนาดไฟล์</div><div class="val mono">{{ document.file_size|filesizeformat }}</div></div>
+    <div class="detail-field"><div class="lbl">สร้างโดย</div><div class="val">{{ document.created_by|default:"—" }} · {{ document.created_at|date:"d/m/Y H:i" }}</div></div>
+    <div class="detail-field"><div class="lbl">แก้ไขล่าสุดโดย</div><div class="val">{{ document.updated_by|default:"—" }} · {{ document.updated_at|date:"d/m/Y H:i" }}</div></div>
+  </div>
+</div>
+{% endblock %}

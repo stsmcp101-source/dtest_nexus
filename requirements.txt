@@ -1,0 +1,10 @@
+Django>=4.2,<5.0
+python-dotenv>=1.0.0
+openpyxl>=3.1.0
+
+# Uncomment for Microsoft SQL Server / SQL Express in production:
+# mssql-django>=1.3
+# pyodbc>=5.0
+
+# Uncomment when adding a REST API layer (see rule #32 - API READY):
+# djangorestframework>=3.14

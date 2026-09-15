@@ -1,0 +1,144 @@
+{% extends "base/base.html" %}
+{% block title %}{% if mode == "create" %}อัปโหลดเอกสาร{% else %}แก้ไขเอกสาร{% endif %} — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v12m0-12l4 4m-4-4l-4 4"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">{% if mode == "create" %}อัปโหลดเอกสารใหม่{% else %}แก้ไขเอกสาร: {{ document.document_code }}{% endif %}</h1>
+      {% if mode == "create" %}
+        <p class="page-desc">ลากไฟล์วาง หรือเลือกได้หลายไฟล์พร้อมกัน ระบบจะตั้งชื่อและจัดกลุ่มให้อัตโนมัติจากชื่อไฟล์ (มีคำว่า SAM = สายงาน Mass, มีคำว่า DEV = สายงาน Dev)</p>
+      {% else %}
+        <p class="page-desc">กรอกข้อมูลเอกสารให้ครบถ้วน ระบบจะบันทึกข้อมูลเมตาดาต้าลงฐานข้อมูลและไฟล์จริงตามแหล่งที่มาที่เลือก</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if mode == "create" %}
+<div class="form-panel">
+  <form method="post" enctype="multipart/form-data" id="quickUploadForm">
+    {% csrf_token %}
+    <div class="upload-drop" id="uploadDrop">
+      <input type="file" name="files" id="fileInput" multiple hidden>
+      <div class="upload-drop-inner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 16V4m0 0L7 9m5-5l5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+        <p><b>ลากไฟล์มาวางที่นี่</b> หรือ <span class="upload-browse">เลือกไฟล์</span></p>
+        <p class="upload-hint">รองรับหลายไฟล์พร้อมกัน</p>
+      </div>
+      <ul class="upload-file-list" id="fileList"></ul>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Year <span class="form-label-optional">(ไม่บังคับ)</span></label>
+      <input type="number" name="document_year" class="form-input" placeholder="เช่น 2025" min="2000" max="2100">
+      <div class="form-help">ระบบจะอ่านปีจากชื่อไฟล์ให้อัตโนมัติ (เช่น SAM-25-... หรือ DEV-25-... = ปี 2025) กรอกที่นี่เฉพาะไฟล์ที่ชื่อไม่มีปีบอกไว้</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description <span class="form-label-optional">(ไม่บังคับ)</span></label>
+      <textarea name="description" class="form-input" rows="3" placeholder="ใช้ร่วมกันทุกไฟล์ที่อัปโหลดครั้งนี้"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app" id="uploadSubmitBtn" disabled>อัปโหลด</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'documents:list' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+
+<details class="link-upload-details">
+  <summary>หรือเพิ่มเอกสารจากลิงก์ภายนอก (Google Drive / SharePoint / URL)</summary>
+  <div class="form-panel">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="link_mode" value="1">
+      {% for field in link_form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+      {% if link_form.non_field_errors %}
+        <div class="form-error">{{ link_form.non_field_errors }}</div>
+      {% endif %}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-app">เพิ่มเอกสาร</button>
+      </div>
+    </form>
+  </div>
+</details>
+
+<script>
+(function () {
+  var drop = document.getElementById('uploadDrop');
+  var input = document.getElementById('fileInput');
+  var list = document.getElementById('fileList');
+  var submitBtn = document.getElementById('uploadSubmitBtn');
+
+  function renderList() {
+    list.innerHTML = '';
+    var files = input.files;
+    submitBtn.disabled = files.length === 0;
+    for (var i = 0; i < files.length; i++) {
+      var li = document.createElement('li');
+      li.textContent = files[i].name + ' (' + (files[i].size / 1024).toFixed(0) + ' KB)';
+      list.appendChild(li);
+    }
+  }
+
+  drop.addEventListener('click', function () { input.click(); });
+  input.addEventListener('change', renderList);
+
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    drop.addEventListener(evt, function (e) {
+      e.preventDefault();
+      drop.classList.add('is-dragover');
+    });
+  });
+  ['dragleave', 'dragend'].forEach(function (evt) {
+    drop.addEventListener(evt, function (e) {
+      e.preventDefault();
+      drop.classList.remove('is-dragover');
+    });
+  });
+  drop.addEventListener('drop', function (e) {
+    e.preventDefault();
+    drop.classList.remove('is-dragover');
+    input.files = e.dataTransfer.files;
+    renderList();
+  });
+})();
+</script>
+
+{% else %}
+<div class="form-panel">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+      <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app">บันทึก</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'documents:list' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base/base.html" %}
+{% block title %}Audit Log — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div>
+      <h1 class="page-title">Audit Log</h1>
+      <p class="page-desc">บันทึกกิจกรรมทั้งหมดในระบบเพื่อการตรวจสอบย้อนหลัง</p>
+    </div>
+  </div>
+</div>
+
+<div class="main-panel">
+  <form method="get" class="toolbar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="ค้นหาชื่อผู้ใช้งาน...">
+    </div>
+    <select class="filter-sel" name="action" onchange="this.form.submit()">
+      <option value="">การกระทำทั้งหมด</option>
+      {% for value, label in actions %}
+        <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <span class="count-info">{{ page_obj.paginator.count }} รายการ</span>
+  </form>
+
+  <div class="table-scroll-x">
+    <table class="doc-table">
+      <thead><tr><th>เวลา</th><th>ผู้ใช้งาน</th><th>การกระทำ</th><th>โมดูล</th><th>รายละเอียด</th><th>IP</th></tr></thead>
+      <tbody>
+        {% for log in page_obj %}
+        <tr>
+          <td class="mono">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+          <td>{{ log.username_snapshot }}</td>
+          <td><span class="tag tag-mass">{{ log.get_action_display }}</span></td>
+          <td>{{ log.module }}</td>
+          <td>{{ log.description }}</td>
+          <td class="mono">{{ log.ip_address|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="table-empty">ไม่พบข้อมูล</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "components/pagination.html" with page_obj=page_obj querystring=request.GET.urlencode %}
+</div>
+{% endblock %}

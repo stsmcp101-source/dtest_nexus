@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ APP_DISPLAY_NAME }}{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fredoka:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v={% now 'U' %}">
+<link rel="stylesheet" href="{% static 'css/app-shell.css' %}?v={% now 'U' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% include "components/navbar.html" %}
+
+<div class="wrap-wide">
+  {% block breadcrumb %}{% endblock %}
+
+  {% include "components/messages.html" %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<footer class="app-footer">© {% now "Y" %} {{ APP_DISPLAY_NAME }} — v{{ APP_VERSION }} · สงวนลิขสิทธิ์</footer>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

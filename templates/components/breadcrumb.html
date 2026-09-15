@@ -1,0 +1,17 @@
+{% comment %}
+Usage:
+{% include "components/breadcrumb.html" with items=breadcrumb_items %}
+where breadcrumb_items is a list of dicts: {"label": "...", "url": "..." or None}
+The last item (no url) renders as current.
+{% endcomment %}
+<div class="crumb">
+  <a href="{% url 'dashboard:index' %}">หน้าแรก</a>
+  {% for item in items %}
+    <span class="sep">/</span>
+    {% if item.url %}
+      <a href="{{ item.url }}">{{ item.label }}</a>
+    {% else %}
+      <span class="cur">{{ item.label }}</span>
+    {% endif %}
+  {% endfor %}
+</div>

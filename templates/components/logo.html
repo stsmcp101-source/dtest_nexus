@@ -1,0 +1,17 @@
+{% comment %}
+Usage: {% include "components/logo.html" with css_class="logo-mark" grad_id="hexSplitNav" %}
+{% endcomment %}
+<svg class="{{ css_class|default:'logo-mark' }}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="{{ grad_id|default:'hexSplit' }}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1f3f63"/><stop offset="49%" stop-color="#1f3f63"/>
+      <stop offset="51%" stop-color="#8b95a1"/><stop offset="100%" stop-color="#8b95a1"/>
+    </linearGradient>
+  </defs>
+  <polygon points="100,18 170,58 170,142 100,182 30,142 30,58" fill="none" stroke="url(#{{ grad_id|default:'hexSplit' }})" stroke-width="15" stroke-linejoin="round"/>
+  <circle cx="100" cy="18" r="9" fill="#1f3f63"/>
+  <circle cx="100" cy="182" r="9" fill="#8b95a1"/>
+  <text x="45" y="132" font-family="Fredoka, sans-serif" font-weight="700" font-size="88" fill="#1f3f63">D</text>
+  <text x="98" y="132" font-family="Fredoka, sans-serif" font-weight="700" font-size="88" fill="#8b95a1">T</text>
+  <path d="M55 100 q10 -16 20 0 q10 16 20 0" fill="none" stroke="#4fc3dd" stroke-width="7" stroke-linecap="round"/>
+</svg>

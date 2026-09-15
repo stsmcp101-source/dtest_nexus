@@ -1,0 +1,48 @@
+{% extends "base/base.html" %}
+{% load perms %}
+{% block title %}Permission Matrix — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div>
+      <h1 class="page-title">Permission Matrix</h1>
+      <p class="page-desc">ภาพรวมสิทธิ์การเข้าถึงของแต่ละ Role ในระบบ</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost btn-app" href="{% url 'permissions:role_list' %}">← กลับไปหน้า Role</a>
+  </div>
+</div>
+
+<div class="main-panel">
+  <div class="table-scroll-x">
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>Permission</th>
+          {% for role in roles %}<th>{{ role.name }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for group in matrix %}
+          <tr><td colspan="{{ roles|length|add:1 }}" style="background:var(--bg-page);font-weight:700;color:var(--navy-700);">{{ group.group }}</td></tr>
+          {% for row in group.rows %}
+          <tr>
+            <td class="mono">{{ row.code }}</td>
+            {% for role in roles %}
+              <td>
+                {% if row.roles|get_item:role.name %}
+                  <span class="tag tag-active">✓</span>
+                {% else %}
+                  <span style="color:var(--slate-400);">—</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

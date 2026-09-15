@@ -1,0 +1,41 @@
+{% extends "base/base.html" %}
+{% block title %}{% if mode == "create" %}เพิ่มรายการสเปค{% else %}แก้ไขรายการสเปค{% endif %} — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">{% if mode == "create" %}เพิ่มรายการสเปค{% else %}แก้ไขรายการสเปค{% endif %}</h1>
+      <p class="page-desc">ระบุปี รุ่น Indoor/Outdoor และรหัสเอกสาร Report Dev / Report Sam ที่เกี่ยวข้อง</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-panel">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+      <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app">บันทึก</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'documents:spec_list' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

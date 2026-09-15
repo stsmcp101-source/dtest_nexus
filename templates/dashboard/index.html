@@ -1,0 +1,73 @@
+{% extends "base/base.html" %}
+{% block title %}แดชบอร์ด — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M11 20V4M18 20v-7"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">แดชบอร์ด</h1>
+      <p class="page-desc">ภาพรวมข้อมูลและกิจกรรมล่าสุดของระบบ dTest.nexus</p>
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="lbl">เอกสารทั้งหมด</div>
+    <div class="val">{{ total_documents }}</div>
+    <div class="sub">อัปเดต ณ {{ now|date:"d/m/Y H:i" }} น.</div>
+  </div>
+  <div class="stat-card dev">
+    <div class="lbl">สายงาน Dev</div>
+    <div class="val">{{ dev_documents }}</div>
+    <div class="sub">แบบร่างและเอกสารพัฒนา</div>
+  </div>
+  <div class="stat-card mass">
+    <div class="lbl">สายงาน Mass</div>
+    <div class="val">{{ mass_documents }}</div>
+    <div class="sub">เอกสารสายการผลิต</div>
+  </div>
+</div>
+
+<div class="layout" style="grid-template-columns:1fr 340px;">
+  <div>
+    <div class="content-card" style="margin-bottom:20px;">
+      <h3 style="font-family:'Poppins',sans-serif;font-size:15px;color:var(--navy-700);margin:0 0 16px;">ทางลัดโมดูล</h3>
+      <div class="quick-actions">
+        {% for module in modules %}
+          <a class="quick-tile" href="{% if module.url_name %}{% url module.url_name %}{% else %}#{% endif %}">
+            <svg class="m-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">{{ module.icon_svg_path|default:"<circle cx='12' cy='12' r='9'/>"|safe }}</svg>
+            <h4>{{ module.name }}</h4>
+            <p>{{ module.short_tag }}</p>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <h3 style="font-family:'Poppins',sans-serif;font-size:15px;color:var(--navy-700);margin:0 0 6px;">กิจกรรมล่าสุด</h3>
+    {% if recent_activity %}
+      {% for entry in recent_activity %}
+        <div class="activity-item">
+          <div>
+            <div class="who">{{ entry.username_snapshot }}</div>
+            <div style="color:var(--muted);">{{ entry.get_action_display }} · {{ entry.module }}</div>
+          </div>
+          <div class="when">{{ entry.timestamp|date:"d/m H:i" }}</div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--muted);font-size:13.5px;">ยังไม่มีกิจกรรม</p>
+    {% endif %}
+    {% if nav.can_view_audit %}
+      <div style="margin-top:14px;">
+        <a href="{% url 'audit:list' %}" style="font-size:13px;color:var(--blue-600);font-weight:600;">ดู Audit Log ทั้งหมด →</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

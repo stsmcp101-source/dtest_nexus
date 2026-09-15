@@ -1,0 +1,86 @@
+{% extends "base/base.html" %}
+{% load perms %}
+{% block title %}ผู้ใช้งาน — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.4"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">จัดการผู้ใช้งาน</h1>
+      <p class="page-desc">ค้นหา กรอง และบริหารบัญชีผู้ใช้งานในระบบ dTest.nexus</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    {% has_perm "user.create" as can_create %}
+    {% if can_create %}
+      <a class="btn btn-primary btn-app" href="{% url 'accounts:user_create' %}">+ เพิ่มผู้ใช้งาน</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="main-panel">
+  <form method="get" class="toolbar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="ค้นหาชื่อผู้ใช้งาน รหัสพนักงาน...">
+    </div>
+    <select class="filter-sel" name="status" onchange="this.form.submit()">
+      <option value="">สถานะทั้งหมด</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <span class="count-info">{{ page_obj.paginator.count }} รายการ</span>
+  </form>
+
+  <div class="table-scroll-x">
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>ชื่อผู้ใช้งาน</th><th>รหัสพนักงาน</th><th>แผนก</th><th>บทบาท</th><th>สถานะ</th><th>เข้าสู่ระบบล่าสุด</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user_obj in page_obj %}
+        <tr>
+          <td><div class="file-name-text">{{ user_obj.get_full_name|default:user_obj.username }}</div><div class="file-code">{{ user_obj.email }}</div></td>
+          <td class="mono">{{ user_obj.employee_id|default:"—" }}</td>
+          <td>{{ user_obj.department|default:"—" }}</td>
+          <td>{% for group in user_obj.groups.all %}<span class="tag tag-mass">{{ group.name }}</span>{% endfor %}</td>
+          <td><span class="tag {% if user_obj.status == 'active' %}tag-active{% elif user_obj.status == 'pending' %}tag-pending{% else %}tag-disabled{% endif %}">{{ user_obj.get_status_display }}</span></td>
+          <td class="mono">{{ user_obj.last_login|date:"d/m/Y H:i"|default:"ยังไม่เคย" }}</td>
+          <td class="actions-col">
+            <div class="row-actions">
+              {% has_perm "user.edit" as can_edit %}
+              {% if can_edit %}<a class="btn-edit" href="{% url 'accounts:user_edit' user_obj.pk %}">Edit</a>{% endif %}
+              {% has_perm "user.reset_password" as can_reset %}
+              {% if can_reset %}
+                <form method="post" action="{% url 'accounts:user_reset_password' user_obj.pk %}" style="display:inline;">{% csrf_token %}<button class="btn-edit" type="submit">Reset PW</button></form>
+              {% endif %}
+              {% if can_edit %}
+                <form method="post" action="{% url 'accounts:user_toggle_status' user_obj.pk %}" style="display:inline;">{% csrf_token %}
+                  <button class="btn-edit" type="submit">{% if user_obj.status == 'active' %}Disable{% else %}Activate{% endif %}</button>
+                </form>
+              {% endif %}
+              {% has_perm "user.delete" as can_delete %}
+              {% if can_delete %}<a class="btn-delete" href="{% url 'accounts:user_delete' user_obj.pk %}">Delete</a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="table-empty">ไม่พบผู้ใช้งาน</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "components/pagination.html" with page_obj=page_obj querystring=request.GET.urlencode %}
+</div>
+{% endblock %}

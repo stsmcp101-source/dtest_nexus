@@ -1,0 +1,50 @@
+{% extends "base/base.html" %}
+{% block title %}{% if mode == "create" %}เพิ่มผู้ใช้งาน{% else %}แก้ไขผู้ใช้งาน{% endif %} — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div>
+      <h1 class="page-title">{% if mode == "create" %}เพิ่มผู้ใช้งานใหม่{% else %}แก้ไขผู้ใช้งาน: {{ user_obj.username }}{% endif %}</h1>
+    </div>
+  </div>
+</div>
+
+<div class="form-panel" style="max-width:820px;">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      {% if field.name == "roles" %}
+        <div class="form-group">
+          <label class="form-label">บทบาท (Role)</label>
+          <div class="checkbox-list">
+            {% for checkbox in field %}
+              <label class="checkbox-item">{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+            {% endfor %}
+          </div>
+        </div>
+      {% elif field.name == "extra_permissions" %}
+        <div class="form-group">
+          <label class="form-label">{{ field.label }}</label>
+          <div class="form-help" style="margin-bottom:8px;">{{ field.help_text }}</div>
+          <div class="checkbox-list" style="grid-template-columns:repeat(2,1fr);max-height:320px;overflow-y:auto;">
+            {% for checkbox in field %}
+              <label class="checkbox-item">{{ checkbox.tag }} {{ checkbox.choice_label }}</label>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app">บันทึก</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'accounts:user_list' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

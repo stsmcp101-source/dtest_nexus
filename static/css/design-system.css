@@ -1,0 +1,170 @@
+/*
+  design-system.css
+  ------------------
+  Design tokens extracted from the two HTML references:
+    - dtest-nexus (Home).html   -> marketing / public shell
+    - document-data.html        -> internal application shell
+
+  Every module template must build on these tokens rather than
+  redefining colors/spacing/typography locally (rule #2 / #31).
+*/
+:root{
+  /* Navy scale */
+  --navy-900:#0f1e30;
+  --navy-800:#152a44;
+  --navy-700:#1f3f63;
+  --navy-600:#2a527d;
+
+  /* Blue scale */
+  --blue-600:#2f8fd6;
+  --blue-500:#4aa4e0;
+  --blue-400:#8ecbec;
+  --blue-100:#e7f2fb;
+
+  /* Cyan accent */
+  --cyan-400:#4fc3dd;
+
+  /* Slate scale */
+  --slate-600:#55606b;
+  --slate-400:#8b95a1;
+
+  /* Neutrals */
+  --bg-page:#f6f8fa;
+  --bg-white:#ffffff;
+  --line:#e1e6ec;
+  --ink:#1c2b3a;
+  --muted:#5c6773;
+  --off-white:#f3f6f9;
+  --muted-dark:#aab8c8;
+
+  /* Status colors (internal app) */
+  --green-600:#2f9e6b;
+  --green-100:#e5f5ee;
+  --amber-600:#c07f1f;
+  --amber-100:#faf1e0;
+  --red-600:#c94f4f;
+  --red-100:#fbeaea;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;background:var(--bg-page);color:var(--ink);
+  font-family:'IBM Plex Sans Thai','Poppins',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  /* Fill the full viewport height even when a page's content is
+     shorter than the screen (login, empty lists, placeholders), and
+     keep the footer pinned to the bottom instead of floating right
+     under short content. See footer.app-footer / footer.site-footer
+     (margin-top:auto) in app-shell.css / home.css. */
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+.disp{font-family:'Poppins',sans-serif;}
+.accent{color:var(--blue-600);font-weight:700;}
+.mono{font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;}
+/* Per explicit request: no page-width cap at all anymore — content
+   spans the full browser width edge-to-edge on every page (Nav bar,
+   Hero, Features, Modules, Process, Standards, CTA, and every
+   internal app page). Only horizontal padding remains, so content
+   never touches the very edge of the viewport. */
+.wrap{width:100%;margin:0 auto;padding:0 40px;}
+.wrap-wide{width:100%;margin:0 auto;padding:0 24px;}
+@media(max-width:1600px){.wrap{padding:0 32px;}.wrap-wide{padding:0 20px;}}
+@media(max-width:640px){.wrap{padding:0 18px;}.wrap-wide{padding:0 14px;}}
+
+/* ---------- Logo ---------- */
+.brand{display:flex;align-items:center;gap:11px;}
+.logo-mark{width:38px;height:38px;flex:none;}
+.logo-mark-sm{width:34px;height:34px;flex:none;}
+.brand-word{font-family:'Fredoka',sans-serif;font-weight:700;font-size:20px;color:var(--navy-700);}
+.brand-word.sm{font-size:18px;}
+.brand-word .dot{color:var(--blue-600);}
+.brand-word .nex{color:var(--slate-600);font-weight:700;}
+.brand-tag{font-size:9.5px;letter-spacing:.14em;color:var(--muted);margin-top:1px;font-weight:500;}
+.brand-lockup{display:flex;flex-direction:column;justify-content:center;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 28px;border-radius:999px;font-size:14.5px;font-weight:600;
+  border:1px solid transparent;cursor:pointer;transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+  white-space:nowrap;font-family:inherit;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn-primary{background:var(--blue-600);color:#fff;box-shadow:0 8px 20px -8px rgba(47,143,214,.55);}
+.btn-primary:hover{background:#2680c4;color:#fff;}
+.btn-ghost-light{border-color:rgba(28,43,58,.18);color:var(--ink);background:rgba(255,255,255,.6);}
+.btn-ghost-light:hover{border-color:rgba(28,43,58,.4);}
+.btn-ghost-dark{border-color:rgba(243,246,249,.35);color:var(--off-white);}
+.btn-ghost-dark:hover{border-color:rgba(243,246,249,.8);background:rgba(243,246,249,.06);}
+.btn-white{background:#fff;color:var(--navy-700);}
+.btn-white:hover{background:#eef4fa;}
+
+/* App-shell (smaller radius) button variants, from document-data.html */
+.btn-app{padding:11px 22px;border-radius:10px;font-size:14px;}
+.btn-app.btn-primary{box-shadow:0 6px 16px -8px rgba(47,143,214,.55);}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:var(--bg-white);}
+.btn-ghost:hover{border-color:var(--slate-400);}
+.btn-sm{padding:7px 14px;font-size:13px;border-radius:8px;}
+.btn-danger{background:var(--red-600);color:#fff;}
+.btn-danger:hover{background:#b43e3e;}
+
+/* ---------- Form inputs ---------- */
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:13.5px;font-weight:600;color:var(--navy-700);margin-bottom:6px;}
+.form-input{
+  width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 14px;
+  font-size:14px;color:var(--ink);background:var(--bg-page);font-family:inherit;
+}
+.form-input:focus{outline:2px solid var(--blue-400);outline-offset:1px;border-color:var(--blue-600);}
+.form-help{font-size:12px;color:var(--muted);margin-top:4px;}
+.form-error{font-size:12px;color:var(--red-600);margin-top:4px;}
+
+.password-field{position:relative;}
+.password-field .form-input{padding-right:42px;}
+.password-toggle{
+  position:absolute;top:50%;right:6px;transform:translateY(-50%);
+  width:30px;height:30px;border:none;background:none;padding:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  color:var(--slate-400);border-radius:7px;
+}
+.password-toggle:hover{color:var(--navy-700);background:var(--bg-page);}
+.password-toggle svg{width:18px;height:18px;}
+.password-toggle .icn-eye-off{display:none;}
+.password-toggle.is-visible .icn-eye{display:none;}
+.password-toggle.is-visible .icn-eye-off{display:block;}
+.form-actions{display:flex;gap:10px;margin-top:24px;}
+.checkbox-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media(max-width:600px){.checkbox-list{grid-template-columns:1fr;}}
+.checkbox-item{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);}
+
+/* ---------- Tags / badges ---------- */
+.tag{
+  display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;
+  font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;
+}
+.tag-dev{background:var(--blue-100);color:var(--navy-700);}
+.tag-mass{background:#eef2f6;color:var(--slate-600);}
+.tag-active{background:var(--green-100);color:var(--green-600);}
+.tag-pending{background:var(--amber-100);color:var(--amber-600);}
+.tag-archived,.tag-disabled{background:var(--red-100);color:var(--red-600);}
+
+.source-tag{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  background:#eef1f4;color:var(--slate-600);font-size:11.5px;font-weight:600;
+}
+.source-tag svg{width:12px;height:12px;}
+
+/* ---------- Messages ---------- */
+.messages{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:8px;}
+.message{padding:12px 16px;border-radius:10px;font-size:13.5px;border:1px solid transparent;}
+.message.success{background:var(--green-100);color:var(--green-600);border-color:#c9e9d9;}
+.message.error{background:var(--red-100);color:var(--red-600);border-color:#f2cccc;}
+.message.info{background:var(--blue-100);color:var(--navy-700);border-color:#cfe4f5;}
+.message.warning{background:var(--amber-100);color:var(--amber-600);border-color:#f0dcb3;}
+
+::selection{background:var(--blue-600);color:#fff;}
