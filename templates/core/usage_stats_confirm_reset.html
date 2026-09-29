@@ -1,0 +1,15 @@
+{% extends "base/base.html" %}
+{% block title %}รีเซ็ตยอดเข้าใช้งาน — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="form-panel">
+  <h2 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:19px;margin:0 0 10px;">ยืนยันการรีเซ็ตยอดเข้าใช้งาน</h2>
+  <p style="color:var(--muted);font-size:14px;">การกระทำนี้จะล้างจำนวนครั้งเข้าใช้งาน เวลาเข้าใช้งานล่าสุด และข้อมูลสรุปรายเดือนของทุกหน้า/เมนู กลับเป็นศูนย์ทั้งหมด <strong>ไม่สามารถย้อนกลับได้</strong> ต้องการดำเนินการต่อหรือไม่?</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger btn-app">ยืนยันการรีเซ็ต</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'core:usage_stats' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

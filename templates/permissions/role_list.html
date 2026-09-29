@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+{% load perms %}
+{% block title %}Role Management — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div>
+      <h1 class="page-title">จัดการ Role</h1>
+      <p class="page-desc">บริหารบทบาทและสิทธิ์การเข้าถึงของผู้ใช้งาน</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    {% has_perm "role.create" as can_create %}
+    {% if can_create %}<a class="btn btn-primary btn-app" href="{% url 'permissions:role_create' %}">+ สร้าง Role</a>{% endif %}
+    <a class="btn btn-ghost btn-app" href="{% url 'permissions:permission_matrix' %}">Permission Matrix</a>
+  </div>
+</div>
+
+<div class="main-panel">
+  <div class="table-scroll-x">
+    <table class="doc-table">
+      <thead><tr><th>Role</th><th>คำอธิบาย</th><th>จำนวนสมาชิก</th><th>System Role</th><th></th></tr></thead>
+      <tbody>
+        {% for role in roles %}
+        <tr>
+          <td class="file-name-text">{{ role.name }}</td>
+          <td>{{ role.description|default:"—" }}</td>
+          <td class="mono">{{ role.member_count }}</td>
+          <td>{% if role.is_system %}<span class="tag tag-active">System</span>{% else %}—{% endif %}</td>
+          <td class="actions-col">
+            <div class="row-actions">
+              {% has_perm "role.edit" as can_edit %}
+              {% if can_edit %}<a class="btn-edit" href="{% url 'permissions:role_edit' role.pk %}">Edit</a>{% endif %}
+              {% has_perm "role.delete" as can_delete %}
+              {% if can_delete and not role.is_system %}<a class="btn-delete" href="{% url 'permissions:role_delete' role.pk %}">Delete</a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="table-empty">ยังไม่มี Role ในระบบ</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

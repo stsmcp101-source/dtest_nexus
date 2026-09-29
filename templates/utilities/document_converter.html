@@ -1,0 +1,72 @@
+{% extends "base/base.html" %}
+{% load tool_icons %}
+{% block title %}Document Converter — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    {% tool_logo_url "document_converter" as logo_url %}
+    <div class="page-icon{% if logo_url %} has-img{% endif %}">
+      {% if logo_url %}<img src="{{ logo_url }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M5.5 15a7 7 0 0012.6 2.5M18.5 9A7 7 0 005.9 6.5"/></svg>{% endif %}
+    </div>
+    <div>
+      <h1 class="page-title">Document Converter</h1>
+      <p class="page-desc">แปลงไฟล์รูปภาพหลายไฟล์รวมเป็น PDF, แปลง PDF เป็นรูปภาพ, และแปลงเอกสาร Office เป็น PDF</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'utilities:index' %}" class="btn btn-app btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+      กลับหน้า Tools
+    </a>
+  </div>
+</div>
+
+<div class="tool-ops-grid">
+  <div class="tool-op-panel">
+    <h3>รูปภาพ → PDF</h3>
+    <p class="op-desc">รองรับ JPG, PNG — แต่ละไฟล์จะกลายเป็นหนึ่งหน้าใน PDF ตามลำดับที่เลือกไฟล์</p>
+    <form method="post" action="{% url 'utilities:convert_images_to_pdf' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">ไฟล์รูปภาพ (เลือกได้หลายไฟล์)</label>
+        <input class="form-input" type="file" name="files" accept="image/jpeg,image/png" multiple required>
+      </div>
+      <button type="submit" class="btn btn-app btn-primary">แปลงเป็น PDF</button>
+    </form>
+  </div>
+
+  <div class="tool-op-panel">
+    <h3>PDF → รูปภาพ</h3>
+    <p class="op-desc">แต่ละหน้าของ PDF จะถูกแปลงเป็นไฟล์ PNG แยกกัน ผลลัพธ์เป็นไฟล์ .zip</p>
+    <form method="post" action="{% url 'utilities:convert_pdf_to_images' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">ไฟล์ PDF</label>
+        <input class="form-input" type="file" name="file" accept="application/pdf" required>
+      </div>
+      <button type="submit" class="btn btn-app btn-primary">แปลงเป็นรูปภาพ</button>
+    </form>
+  </div>
+
+  <div class="tool-op-panel">
+    <h3>Office (Word / Excel) → PDF</h3>
+    <p class="op-desc">
+      รองรับ .doc, .docx, .xls, .xlsx — แปลงโดยใช้ Microsoft Word/Excel บนเครื่องเซิร์ฟเวอร์โดยตรง
+      จึงต้องติดตั้ง Microsoft Office ไว้บนเครื่องที่รันระบบนี้เท่านั้น
+    </p>
+    <form method="post" action="{% url 'utilities:convert_office_to_pdf' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">ไฟล์ Word หรือ Excel</label>
+        <input class="form-input" type="file" name="file" accept=".doc,.docx,.xls,.xlsx" required>
+      </div>
+      <button type="submit" class="btn btn-app btn-primary">แปลงเป็น PDF</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

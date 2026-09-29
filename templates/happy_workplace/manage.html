@@ -1,0 +1,115 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}จัดการ Happy Workplace — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">จัดการ Happy Workplace</h1>
+      <p class="page-desc">แก้ไขข่าวสาร/กิจกรรม และภาพประกาศที่แสดงบนหน้า Happy Workplace</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost btn-app" href="{% url 'happy_workplace:index' %}">ดูหน้า Happy Workplace</a>
+  </div>
+</div>
+
+<div class="hwp-manage-grid">
+  <div class="content-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0;">ภาพประกาศ</h3>
+      <a class="btn btn-primary btn-app btn-sm" href="{% url 'happy_workplace:poster_create' %}">+ เพิ่มภาพ</a>
+    </div>
+    {% for p in posters %}
+    <div class="hwp-manage-row">
+      <div class="hwp-manage-thumb"><img src="{{ p.image.url }}" alt=""></div>
+      <div class="hwp-manage-row-body">
+        <div class="title">{{ p.caption|default:"(ไม่มีคำบรรยาย)" }}</div>
+        <div class="meta">ลำดับ {{ p.order }} · {{ p.created_at|date:"d M Y" }}</div>
+      </div>
+      <div class="hwp-manage-row-actions">
+        <a class="btn-delete" href="{% url 'happy_workplace:poster_delete' p.pk %}">Delete</a>
+      </div>
+    </div>
+    {% empty %}
+    <p class="hwp-empty">ยังไม่มีภาพประกาศ</p>
+    {% endfor %}
+  </div>
+
+  <div class="content-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0;">ข่าวสาร/กิจกรรม</h3>
+      <a class="btn btn-primary btn-app btn-sm" href="{% url 'happy_workplace:announcement_create' %}">+ เพิ่มข่าวสาร</a>
+    </div>
+    {% for a in announcements %}
+    <div class="hwp-manage-row">
+      <div class="hwp-manage-row-body">
+        <div class="title">{{ a.title }} {% if a.is_pinned %}<span class="hwp-pin-badge">(ปักหมุด)</span>{% endif %}</div>
+        <div class="meta">{{ a.get_category_display }} · {{ a.created_at|date:"d M Y" }}</div>
+      </div>
+      <div class="hwp-manage-row-actions">
+        <a class="btn-edit" href="{% url 'happy_workplace:announcement_edit' a.pk %}">Edit</a>
+        <a class="btn-delete" href="{% url 'happy_workplace:announcement_delete' a.pk %}">Delete</a>
+      </div>
+    </div>
+    {% empty %}
+    <p class="hwp-empty">ยังไม่มีข่าวสารหรือกิจกรรม</p>
+    {% endfor %}
+  </div>
+
+  <div class="content-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0;">คำทำนายเซียมซี</h3>
+      <a class="btn btn-primary btn-app btn-sm" href="{% url 'happy_workplace:fortune_slip_create' %}">+ เพิ่มคำทำนาย</a>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 12px;">ถ้ายังไม่มีภาพอัปโหลด เกมจะใช้คำทำนายข้อความสำรองที่มีอยู่แล้วแทน</p>
+    {% for s in fortune_slips %}
+    <div class="hwp-manage-row">
+      <div class="hwp-manage-thumb"><img src="{{ s.image.url }}" alt=""></div>
+      <div class="hwp-manage-row-body">
+        <div class="title">ใบที่ {{ s.order }}</div>
+        <div class="meta">{{ s.created_at|date:"d M Y" }}</div>
+      </div>
+      <div class="hwp-manage-row-actions">
+        <a class="btn-delete" href="{% url 'happy_workplace:fortune_slip_delete' s.pk %}">Delete</a>
+      </div>
+    </div>
+    {% empty %}
+    <p class="hwp-empty">ยังไม่มีคำทำนายที่อัปโหลด (ใช้คำทำนายข้อความสำรองอยู่)</p>
+    {% endfor %}
+  </div>
+
+  <div class="content-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0;">คลังคำศัพท์ Squares</h3>
+      <a class="btn btn-primary btn-app btn-sm" href="{% url 'happy_workplace:squares_words' %}">จัดการคำศัพท์</a>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin:0;">ตอนนี้มี <strong>{{ squares_word_count }}</strong> คำ (หมวดการทำงานและสำนักงาน อาหารและเครื่องดื่ม การเดินทางและการท่องเที่ยว สุขภาพและการแพทย์ และอารมณ์และความรู้สึก) เพิ่ม แก้ไข หรือลบคำและความหมายได้ เวลาต่อรอบตั้งค่าได้ที่หน้าเกม Squares</p>
+  </div>
+
+  <div class="content-card">
+    <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0 0 6px;">จำกัดจำนวนครั้งที่เล่นต่อวัน</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin:0 0 14px;">ใช้กับ Wordle, Squares, พิมพ์เร็ว, เซียมซี, วิเคราะห์เบอร์ และทำนายฝัน นับแยกฟีเจอร์ แยกตามเบราว์เซอร์ของผู้เล่น และเริ่มนับใหม่ทุกวัน (เที่ยงคืนเวลาไทย) ใส่ 0 = ไม่จำกัด</p>
+    <form method="post" action="{% url 'happy_workplace:play_settings_update' %}">
+      {% csrf_token %}
+      {% for field in play_form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึก</button>
+    </form>
+    <form method="post" action="{% url 'happy_workplace:play_counts_reset' %}" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);">
+      {% csrf_token %}
+      <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">วันนี้มีการนับไว้ {{ plays_today }} รายการ (ผู้เล่น × เกม)</p>
+      <button type="submit" class="btn btn-ghost btn-app btn-sm">รีเซ็ตการนับของวันนี้</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

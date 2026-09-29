@@ -1,0 +1,95 @@
+{% extends "base/base.html" %}
+{% load perms internal_icons %}
+{% block title %}{{ module_title }} — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+{% endblock %}
+
+{% block content %}
+{% has_perm "settings.edit" as can_edit_icons %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4v5c0 5-3.4 7.9-8 9-4.6-1.1-8-4-8-9V7z"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">{{ module_title }} <span class="tag">{{ module_tag }}</span></h1>
+      <p class="page-desc">{{ module_description }}</p>
+    </div>
+  </div>
+  {% if can_edit_icons %}
+  <div class="page-actions"><a href="{% url 'internal:icon_settings' %}" class="btn btn-app btn-ghost">ตั้งค่าโลโก้</a></div>
+  {% endif %}
+</div>
+
+<div class="tool-section">
+  <div class="tool-section-head">
+    <h2 class="tool-section-title">รายการ</h2>
+  </div>
+  <div class="tool-grid">
+
+    <a class="tool-card" href="{% url 'training_history:index' %}">
+      {% internal_icon "training_history" %}
+      <h4>External Training History</h4>
+      <p>ประวัติการเข้าฝึกอบรมภายนอกของพนักงาน</p>
+    </a>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "test_room_damage" %}
+      <h4>History Test room Damage</h4>
+      <p>บันทึกและติดตามประวัติความเสียหายของห้องทดสอบ</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+    <a class="tool-card" href="{% url 'spare_parts:index' %}">
+      {% internal_icon "spare_parts" %}
+      <h4>Spare part</h4>
+      <p>จัดการคลังอะไหล่สำหรับซ่อมบำรุงเครื่องทดสอบ</p>
+    </a>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "test_unit_control" %}
+      <h4>Test Unit Control</h4>
+      <p>ติดตามสถานะและควบคุมเครื่องทดสอบแต่ละประเภท</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "pipe_stock" %}
+      <h4>Pipe Stock</h4>
+      <p>จัดการสต๊อกท่อสำหรับงานทดสอบ</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "refrigerant_stock" %}
+      <h4>Refrigerant Stock</h4>
+      <p>จัดการสต๊อกสารทำความเย็น</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "tape_stock" %}
+      <h4>Tape Stock</h4>
+      <p>จัดการสต๊อกเทปสำหรับงานทดสอบ</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "paper_stock" %}
+      <h4>Paper Stock</h4>
+      <p>จัดการสต๊อกกระดาษสำหรับพิมพ์เอกสาร</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+    <div class="tool-card is-disabled" title="ยังไม่เปิดใช้งาน">
+      {% internal_icon "other_stock" %}
+      <h4>Other Stock</h4>
+      <p>จัดการวัสดุคงคลังอื่น ๆ ที่ไม่เข้าหมวดหมู่ข้างต้น</p>
+      <span class="t-soon">เร็ว ๆ นี้</span>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

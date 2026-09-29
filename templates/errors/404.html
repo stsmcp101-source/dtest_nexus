@@ -1,0 +1,6 @@
+{% extends "errors/_error_base.html" %}
+{% block content %}
+{% with error_code="404" error_title="ไม่พบหน้าที่ต้องการ" error_message="หน้าที่คุณกำลังค้นหาอาจถูกย้ายหรือไม่มีอยู่ในระบบ" %}
+{{ block.super }}
+{% endwith %}
+{% endblock %}

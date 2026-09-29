@@ -1,0 +1,21 @@
+{% comment %}
+Usage:
+{% include "components/page_header.html" with title="Document Data" tag="(Dev, Mass)" description="..." icon_svg=icon_svg %}
+This component only renders the icon/title/description on the left.
+Templates that need action buttons on the right render the
+`.page-head`/`.page-actions` markup directly instead of using this
+include, since Django's {% include %} cannot receive block content
+from the calling template (only {% extends %} can). See
+documents/document_list.html for that pattern.
+{% endcomment %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      {{ icon_svg|default:"" }}
+    </div>
+    <div>
+      <h1 class="page-title">{{ title }} {% if tag %}<span class="tag">{{ tag }}</span>{% endif %}</h1>
+      {% if description %}<p class="page-desc">{{ description }}</p>{% endif %}
+    </div>
+  </div>
+</div>

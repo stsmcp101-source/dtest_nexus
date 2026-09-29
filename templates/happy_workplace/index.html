@@ -1,0 +1,180 @@
+{% extends "base/base.html" %}
+{% load static perms module_logo %}
+{% block title %}Happy Workplace — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+{% has_perm "happy_workplace.edit" as can_edit %}
+<div class="page-head">
+  <div class="page-head-left">
+    {% module_logo_url as module_logo %}
+    <div class="page-icon{% if module_logo %} has-img is-cover{% endif %}">
+      {% if module_logo %}<img src="{{ module_logo }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8 13.5s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>{% endif %}
+    </div>
+    <div>
+      <h1 class="page-title">Happy Workplace</h1>
+      <p class="page-desc">พื้นที่ข่าวสาร กิจกรรม และมินิเกมคลายเครียดสำหรับชาว dTest.nexus</p>
+    </div>
+  </div>
+  {% if can_edit %}
+  <div class="page-actions">
+    <a class="btn btn-ghost btn-app" href="{% url 'happy_workplace:manage' %}">จัดการข่าวสาร/ภาพประกาศ</a>
+  </div>
+  {% endif %}
+</div>
+
+<section class="hwp-board">
+  <div class="hwp-board-col hwp-poster-col">
+    <div class="hwp-section-head"><h2 style="visibility:hidden;">&nbsp;</h2></div>
+    <div class="hwp-poster-frame" id="hwpPosterFrame">
+      {% for p in posters %}
+      <div class="hwp-poster-slide {% if forloop.first %}is-active{% endif %}">
+        <img src="{{ p.image.url }}" alt="{{ p.caption }}">
+        {% if p.caption %}<div class="hwp-poster-caption">{{ p.caption }}</div>{% endif %}
+      </div>
+      {% empty %}
+      <div class="hwp-poster-empty">ยังไม่มีภาพประกาศ</div>
+      {% endfor %}
+      {% if posters %}
+      <button type="button" class="hwp-poster-zoom" id="hwpPosterZoom" aria-label="ขยายดูภาพเต็ม">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg>
+      </button>
+      {% endif %}
+      {% if posters|length > 1 %}
+      <button type="button" class="hwp-poster-nav prev" id="hwpPosterPrev" aria-label="ก่อนหน้า">‹</button>
+      <button type="button" class="hwp-poster-nav next" id="hwpPosterNext" aria-label="ถัดไป">›</button>
+      <div class="hwp-poster-dots" id="hwpPosterDots">
+        {% for p in posters %}
+        <span class="hwp-poster-dot {% if forloop.first %}is-active{% endif %}"></span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="hwp-board-col hwp-ann-col">
+    <div class="hwp-section-head"><h2>ข่าวสารและกิจกรรม</h2></div>
+    <div class="hwp-announcement-list" id="hwpAnnList">
+      {% for a in announcements %}
+      <div class="hwp-announcement-card {% if a.is_pinned %}is-pinned{% endif %}">
+        <div class="hwp-ann-top">
+          <span class="hwp-tag hwp-tag-{{ a.category }}">{{ a.get_category_display }}</span>
+          {% if a.is_pinned %}<span class="hwp-pin-badge">ปักหมุด</span>{% endif %}
+        </div>
+        <h3>{{ a.title }}</h3>
+        <p class="hwp-ann-body">{{ a.body }}</p>
+        <button type="button" class="hwp-ann-more" style="display:none;">อ่านต่อ</button>
+        <span class="hwp-ann-date mono">{{ a.created_at|date:"d M Y" }}</span>
+      </div>
+      {% empty %}
+      <p class="hwp-empty">ยังไม่มีข่าวสารหรือกิจกรรมในขณะนี้</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<div class="hwp-lightbox" id="hwpLightbox">
+  <button type="button" class="hwp-lightbox-close" id="hwpLightboxClose" aria-label="ปิด">×</button>
+  <img id="hwpLightboxImg" src="" alt="">
+</div>
+
+<section class="hwp-games">
+  <div class="hwp-section-head">
+    <h2>มุมคลายเครียด</h2>
+  </div>
+  <div class="hwp-game-grid">
+    {% for game in games %}
+    <a class="hwp-game-card" href="{% url game.url_name %}">
+      {{ game.icon|safe }}
+      <span class="hwp-game-tag mono">{{ game.tag }}</span>
+      <h3>{{ game.name }}</h3>
+      <p>{{ game.description }}</p>
+      <span class="hwp-game-cta">เล่นเลย →</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function(){
+  var frame = document.getElementById("hwpPosterFrame");
+  var idx = 0;
+  var slides = [];
+
+  if(frame){
+    slides = Array.prototype.slice.call(frame.querySelectorAll(".hwp-poster-slide"));
+    var dots = frame.querySelectorAll(".hwp-poster-dot");
+    var prevBtn = document.getElementById("hwpPosterPrev");
+    var nextBtn = document.getElementById("hwpPosterNext");
+
+    function show(i){
+      slides[idx].classList.remove("is-active");
+      dots[idx] && dots[idx].classList.remove("is-active");
+      idx = (i + slides.length) % slides.length;
+      slides[idx].classList.add("is-active");
+      dots[idx] && dots[idx].classList.add("is-active");
+    }
+    if(slides.length > 1){
+      prevBtn.addEventListener("click", function(){ show(idx-1); });
+      nextBtn.addEventListener("click", function(){ show(idx+1); });
+      setInterval(function(){ show(idx+1); }, 6000);
+    }
+  }
+
+  // Zoom lightbox — view the current poster at full size, uncropped,
+  // for posters whose text is too small to read at the square thumbnail size.
+  var zoomBtn = document.getElementById("hwpPosterZoom");
+  var lightbox = document.getElementById("hwpLightbox");
+  var lightboxImg = document.getElementById("hwpLightboxImg");
+  var lightboxClose = document.getElementById("hwpLightboxClose");
+  if(zoomBtn && lightbox){
+    zoomBtn.addEventListener("click", function(){
+      var activeImg = slides[idx] && slides[idx].querySelector("img");
+      if(!activeImg) return;
+      lightboxImg.src = activeImg.src;
+      lightbox.classList.add("is-open");
+    });
+    function closeLightbox(){ lightbox.classList.remove("is-open"); lightboxImg.src = ""; }
+    lightboxClose.addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", function(e){ if(e.target === lightbox) closeLightbox(); });
+    document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeLightbox(); });
+  }
+
+  // Announcement body: clamp to one line, only show "อ่านต่อ" when the
+  // text actually overflows that line, and expand in place on click.
+  // Re-checked on resize since a column that fits one line at one width
+  // may not at another.
+  var annCards = document.querySelectorAll(".hwp-announcement-card");
+  annCards.forEach(function(card){
+    var more = card.querySelector(".hwp-ann-more");
+    if(!more) return;
+    more.addEventListener("click", function(){
+      var body = card.querySelector(".hwp-ann-body");
+      var expanded = body.classList.toggle("is-expanded");
+      more.textContent = expanded ? "ย่อ" : "อ่านต่อ";
+    });
+  });
+  function syncAnnOverflow(){
+    annCards.forEach(function(card){
+      var body = card.querySelector(".hwp-ann-body");
+      var more = card.querySelector(".hwp-ann-more");
+      if(!body || !more || body.classList.contains("is-expanded")) return;
+      more.style.display = body.scrollWidth > body.clientWidth + 1 ? "inline-block" : "none";
+    });
+  }
+  syncAnnOverflow();
+
+  // Keep the announcement box's height matched to the poster's rendered
+  // height so it never reads as "shorter than the picture" — it scrolls
+  // internally instead of shrinking to fit its own content.
+  var annList = document.getElementById("hwpAnnList");
+  function syncHeights(){
+    if(!frame || !annList) return;
+    var h = frame.getBoundingClientRect().height;
+    if(h > 0) annList.style.height = h + "px";
+  }
+  syncHeights();
+  window.addEventListener("resize", function(){ syncHeights(); syncAnnOverflow(); });
+})();
+</script>
+{% endblock %}

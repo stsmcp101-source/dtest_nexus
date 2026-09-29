@@ -1,0 +1,15 @@
+{% extends "base/base.html" %}
+{% block title %}ลบ Role — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="form-panel">
+  <h2 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:19px;margin:0 0 10px;">ยืนยันการลบ Role</h2>
+  <p style="color:var(--muted);font-size:14px;">คุณต้องการลบ Role <strong>{{ role.name }}</strong> ใช่หรือไม่?</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger btn-app">ยืนยันการลบ</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'permissions:role_list' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

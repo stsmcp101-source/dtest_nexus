@@ -1,0 +1,33 @@
+{% extends "base/base.html" %}
+{% block title %}{% if is_new %}เพิ่มคำศัพท์{% else %}แก้ไขคำศัพท์{% endif %} — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">{% if is_new %}เพิ่มคำศัพท์{% else %}แก้ไขคำศัพท์{% endif %}</h1>
+      <p class="page-desc">คำนี้จะถูกนำไปสร้างตารางในเกม Squares พร้อมแสดงความหมายเมื่อผู้เล่นทายถูก</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-panel">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app">บันทึก</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'happy_workplace:squares_words' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

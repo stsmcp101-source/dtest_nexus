@@ -1,0 +1,33 @@
+{% extends "base/base.html" %}
+{% load static tool_icons %}
+{% block title %}{{ tool_title }} — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    {% tool_page_icon tool_key %}
+    <div>
+      <h1 class="page-title">{{ tool_title }}</h1>
+      <p class="page-desc">{{ tool_description }}</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'utilities:index' %}" class="btn btn-app btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+      กลับหน้า Tools
+    </a>
+  </div>
+</div>
+
+<div class="content-card">
+  {% include panel_template %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static tool_script %}?v={% now 'U' %}"></script>
+{% endblock %}

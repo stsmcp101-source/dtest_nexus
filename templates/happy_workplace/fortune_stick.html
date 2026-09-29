@@ -1,0 +1,185 @@
+{% extends "base/base.html" %}
+{% load static perms %}
+{% block title %}เสี่ยงเซียมซี — Happy Workplace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+{% has_perm "happy_workplace.edit" as can_edit %}
+<div class="fs-page-head">
+  <a class="hwp-back-link" href="{% url 'happy_workplace:index' %}">← กลับ Happy Workplace</a>
+  {% if can_edit %}
+  <a class="btn btn-ghost btn-app btn-sm" href="{% url 'happy_workplace:fortune_slip_create' %}">+ อัปโหลดคำทำนาย</a>
+  {% endif %}
+</div>
+
+<div class="fs-container">
+  <div class="fs-left">
+    <svg class="fs-monk-icn" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="80" rx="34" ry="14" fill="#c97d2e"/>
+      <path d="M22 78c0-20 8-34 28-34s28 14 28 34c0 3-2 5-5 5H27c-3 0-5-2-5-5z" fill="#e8963e"/>
+      <path d="M30 80c4-14 10-22 20-22s16 8 20 22" fill="none" stroke="#c97d2e" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="40" cy="72" r="5" fill="#e8963e" stroke="#c97d2e" stroke-width="1.5"/>
+      <circle cx="60" cy="72" r="5" fill="#e8963e" stroke="#c97d2e" stroke-width="1.5"/>
+      <circle cx="50" cy="40" r="20" fill="#f5cba0"/>
+      <path d="M40 42c1.5-2 4-2 5.5 0" fill="none" stroke="#6b4a2a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M54.5 42c1.5-2 4-2 5.5 0" fill="none" stroke="#6b4a2a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M44 50c2.5 2.5 9.5 2.5 12 0" fill="none" stroke="#c98a5a" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="50" cy="21" r="3" fill="#f5cba0"/>
+    </svg>
+    <h1 class="fs-title">เซียมซี</h1>
+    <p class="fs-instructions">
+      อธิษฐานจิตระลึกถึงสิ่งที่นับถือ<br>
+      ถามถึงสิ่งที่สงสัย แล้วกด <strong>เขย่าเซียมซี</strong><br>
+      รอสักครู่คำทำนายจะปรากฏทางด้านขวา
+    </p>
+
+    <div class="fs-tube-wrap">
+      <svg class="fs-tube" id="fsTube" viewBox="0 0 140 210">
+        <line x1="48" y1="76" x2="30" y2="8" stroke="#3d2513" stroke-width="5" stroke-linecap="round"/>
+        <line x1="30" y1="8" x2="34" y2="16" stroke="#b3273f" stroke-width="5" stroke-linecap="round"/>
+        <line x1="57" y1="72" x2="46" y2="2" stroke="#2e1c0e" stroke-width="5" stroke-linecap="round"/>
+        <line x1="46" y1="2" x2="50" y2="11" stroke="#b3273f" stroke-width="5" stroke-linecap="round"/>
+        <line x1="70" y1="70" x2="66" y2="0" stroke="#3d2513" stroke-width="5" stroke-linecap="round"/>
+        <line x1="66" y1="0" x2="67" y2="9" stroke="#b3273f" stroke-width="5" stroke-linecap="round"/>
+        <line x1="83" y1="72" x2="88" y2="3" stroke="#2e1c0e" stroke-width="5" stroke-linecap="round"/>
+        <line x1="88" y1="3" x2="86" y2="12" stroke="#b3273f" stroke-width="5" stroke-linecap="round"/>
+        <line x1="92" y1="76" x2="105" y2="10" stroke="#3d2513" stroke-width="5" stroke-linecap="round"/>
+        <line x1="105" y1="10" x2="102" y2="18" stroke="#b3273f" stroke-width="5" stroke-linecap="round"/>
+
+        <rect x="24" y="72" width="92" height="128" rx="12" fill="#b3273f" stroke="#7a1a2b" stroke-width="2"/>
+        <rect x="24" y="72" width="92" height="22" rx="4" fill="#f2c94c"/>
+        <rect x="24" y="178" width="92" height="22" rx="4" fill="#f2c94c"/>
+
+        <path d="M32 108q6-6 12 0t12 0" fill="none" stroke="#f2c94c" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+        <path d="M84 108q6-6 12 0t12 0" fill="none" stroke="#f2c94c" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+        <path d="M32 160q6 6 12 0t12 0" fill="none" stroke="#f2c94c" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+        <path d="M84 160q6 6 12 0t12 0" fill="none" stroke="#f2c94c" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+
+        <circle cx="70" cy="135" r="27" fill="#f2c94c" stroke="#8a4b12" stroke-width="1.5"/>
+        <path d="M70 116c4 6 4 10 0 14-4-4-4-8 0-14z" fill="#b3273f"/>
+        <path d="M62 133a8 8 0 0116 0" fill="none" stroke="#b3273f" stroke-width="2" stroke-linecap="round"/>
+        <text x="70" y="150" text-anchor="middle" font-size="13" fill="#7a1a2b" font-weight="700">เซียมซี</text>
+      </svg>
+    </div>
+
+    <button type="button" class="fs-shake-btn" id="fsShakeBtn">เขย่าเซียมซี</button>
+    <p class="hwp-play-note" id="fsPlayNote"></p>
+    <p class="hwp-disclaimer">เพื่อความบันเทิงเท่านั้น ไม่ควรใช้เป็นหลักในการตัดสินใจสำคัญ</p>
+  </div>
+
+  <div class="fs-right">
+    <div class="fs-slip-empty" id="fsSlipEmpty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      <p>กดเขย่าเซียมซีเพื่อดูคำทำนาย</p>
+    </div>
+    <div class="fs-slip" id="fsSlip">
+      <div class="fs-slip-num" id="fsNum">ใบที่ 1</div>
+      <div class="fs-slip-grade" id="fsGrade"></div>
+      <p class="fs-slip-text" id="fsText"></p>
+    </div>
+    <img class="fs-slip-img" id="fsSlipImg" alt="คำทำนายเซียมซี">
+  </div>
+</div>
+{{ fortune_slip_urls|json_script:"fortuneSlipUrls" }}
+{{ play|json_script:"fsPlayData" }}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/hwp_play.js' %}?v={% now 'U' %}"></script>
+<script>
+(function(){
+  var FORTUNE_IMAGES = JSON.parse(document.getElementById("fortuneSlipUrls").textContent);
+  var PLAY_URL = "{% url 'happy_workplace:play_start' 'fortune' %}";
+  var CSRF = "{{ csrf_token }}";
+  var playState = JSON.parse(document.getElementById("fsPlayData").textContent);
+  var TOTAL_SLIPS = 28;
+  var STICKS = [
+    "สิ่งที่หวังไว้มีโอกาสสำเร็จ อุปสรรคที่ผ่านมาจะคลี่คลาย ทำสิ่งใดด้วยความตั้งใจจะได้ผลดี",
+    "ช่วงนี้ควรทำงานด้วยความรอบคอบ อย่ารีบร้อนตัดสินใจ ผลลัพธ์จะดีขึ้นเมื่อเวลาผ่านไป",
+    "มีเกณฑ์ได้รับข่าวดีจากคนใกล้ตัว การเงินไหลลื่นขึ้น แต่ควรใช้จ่ายอย่างมีสติ",
+    "ระวังการพูดจาที่อาจก่อให้เกิดความเข้าใจผิด ควรฟังให้มากกว่าพูด",
+    "งานที่ทำค้างไว้จะเริ่มเดินหน้าได้อีกครั้ง ความพยายามที่ผ่านมาจะเริ่มเห็นผล",
+    "เรื่องความรักมีความผันผวนเล็กน้อย ควรเปิดใจพูดคุยกันตรงๆ",
+    "โชคด้านการงานเข้าข้าง มีโอกาสได้รับความไว้วางใจให้ทำสิ่งใหม่ๆ",
+    "สุขภาพเป็นเรื่องที่ควรใส่ใจช่วงนี้ พักผ่อนให้เพียงพอ อย่าหักโหมเกินไป",
+    "สิ่งที่ลงทุนลงแรงไปจะเริ่มออกดอกออกผล ความอดทนจะได้รับการตอบแทน",
+    "มีเรื่องให้ตัดสินใจหลายทาง ควรปรึกษาผู้ใหญ่หรือคนที่ไว้ใจก่อนตัดสินใจ",
+    "เดินทางไปที่ใดจะราบรื่น ติดต่อธุระต่างๆ สำเร็จลุล่วงด้วยดี",
+    "อย่าเพิ่งเชื่อใจใครง่ายๆ ในเรื่องเงินทอง ตรวจสอบให้ถี่ถ้วนก่อนตัดสินใจ",
+    "ความคิดสร้างสรรค์กำลังมาแรง เหมาะแก่การเริ่มโครงการใหม่ๆ",
+    "ทุกอย่างเป็นไปตามปกติ ไม่มีอะไรน่ากังวลเป็นพิเศษ ทำหน้าที่ของตนให้ดีที่สุด",
+    "ความสัมพันธ์กับคนรอบข้างจะแน่นแฟ้นขึ้น มีคนคอยช่วยเหลือในยามยาก",
+    "ระวังความประมาทในการทำงาน ตรวจทานรายละเอียดให้ดีก่อนส่งงาน",
+    "เรื่องที่กังวลใจจะคลี่คลายไปในทางที่ดี ใจเย็นๆ แล้วทุกอย่างจะผ่านไปได้",
+    "โอกาสดีกำลังจะเข้ามา แต่ต้องอาศัยความกล้าตัดสินใจ",
+    "การเงินมีเกณฑ์ดีขึ้น อาจมีรายได้พิเศษเข้ามาโดยไม่คาดคิด",
+    "ทุกความพยายามจะไม่สูญเปล่า ผลงานที่ทำจะเป็นที่ประจักษ์ในไม่ช้า",
+    "มีผู้ใหญ่คอยสนับสนุนอยู่เบื้องหลัง ขอคำแนะนำจะช่วยให้งานเดินไปได้ราบรื่นขึ้น",
+    "ระวังการผัดวันประกันพรุ่ง สิ่งที่ควรทำให้เสร็จควรรีบจัดการก่อนจะสายเกินไป",
+    "ข่าวดีเรื่องการงานหรือการเรียนกำลังเดินทางมา เตรียมใจรับโอกาสใหม่ไว้ได้เลย",
+    "ช่วงนี้อารมณ์อาจแปรปรวนง่าย ลองพักหายใจลึกๆ แล้วค่อยตัดสินใจเรื่องสำคัญ",
+    "มิตรภาพเก่าจะกลับมาเป็นประโยชน์ การติดต่อกับคนที่ห่างหายไปจะนำสิ่งดีมาให้",
+    "ควรวางแผนการเงินให้รัดกุม รายจ่ายที่ไม่คาดคิดอาจเข้ามา แต่จะผ่านไปได้ด้วยดี",
+    "ความตั้งใจที่มั่นคงจะพาไปถึงเป้าหมาย อย่าท้อถอยแม้ทางข้างหน้าจะดูยาวไกล",
+    "สิ่งที่รอคอยใกล้จะถึงเวลาแล้ว ใจเย็นๆ ทำหน้าที่ปัจจุบันให้ดีที่สุดต่อไป",
+  ];
+  var GRADES = ["เซียมซีดี","เซียมซีปานกลาง","เซียมซีดี","เซียมซีเสี่ยง","เซียมซีดี",
+    "เซียมซีปานกลาง","เซียมซีดี","เซียมซีเสี่ยง","เซียมซีดี","เซียมซีปานกลาง",
+    "เซียมซีดี","เซียมซีเสี่ยง","เซียมซีดี","เซียมซีปานกลาง","เซียมซีดี",
+    "เซียมซีเสี่ยง","เซียมซีดี","เซียมซีปานกลาง","เซียมซีดี","เซียมซีดี",
+    "เซียมซีดี","เซียมซีเสี่ยง","เซียมซีดี","เซียมซีปานกลาง","เซียมซีดี",
+    "เซียมซีปานกลาง","เซียมซีดี","เซียมซีดี"];
+
+  var btn = document.getElementById("fsShakeBtn");
+  var tube = document.getElementById("fsTube");
+  var slipEmpty = document.getElementById("fsSlipEmpty");
+  var slip = document.getElementById("fsSlip");
+  var slipImg = document.getElementById("fsSlipImg");
+  var numEl = document.getElementById("fsNum");
+  var gradeEl = document.getElementById("fsGrade");
+  var textEl = document.getElementById("fsText");
+
+  function refreshPlayUi(){
+    var note = document.getElementById("fsPlayNote");
+    note.textContent = HwpPlay.note(playState);
+    note.classList.toggle("is-out", HwpPlay.exhausted(playState));
+    btn.disabled = HwpPlay.exhausted(playState);
+  }
+
+  function shake(){
+    slip.classList.remove("show");
+    slipImg.classList.remove("show");
+    slipEmpty.style.display = "flex";
+    tube.classList.add("fs-tilt");
+    setTimeout(function(){
+      tube.classList.remove("fs-tilt");
+      slipEmpty.style.display = "none";
+      var drawn = 1 + Math.floor(Math.random()*TOTAL_SLIPS);
+      if(FORTUNE_IMAGES[drawn]){
+        slipImg.src = FORTUNE_IMAGES[drawn];
+        slipImg.classList.add("show");
+      } else {
+        var idx = drawn - 1;
+        var grade = GRADES[idx];
+        numEl.textContent = "ใบที่ " + drawn;
+        gradeEl.textContent = grade;
+        gradeEl.className = "fs-slip-grade " + (grade === "เซียมซีดี" ? "good" : grade === "เซียมซีเสี่ยง" ? "risky" : "mid");
+        textEl.textContent = STICKS[idx];
+        slip.classList.add("show");
+      }
+      refreshPlayUi();
+    }, 1800);
+  }
+
+  btn.addEventListener("click", function(){
+    btn.disabled = true;
+    HwpPlay.start(PLAY_URL, CSRF).then(function(r){
+      playState = r;
+      if (r.ok) { shake(); } else { refreshPlayUi(); }
+    }).catch(function(){
+      refreshPlayUi();
+      alert("เขย่าเซียมซีไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    });
+  });
+  refreshPlayUi();
+})();
+</script>
+{% endblock %}

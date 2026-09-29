@@ -1,0 +1,253 @@
+{% extends "base/base.html" %}
+{% load static perms %}
+{% block title %}พิมพ์เร็ว — Happy Workplace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+{% has_perm "happy_workplace.edit" as can_edit %}
+<div class="hwp-wordle-layout-wrap">
+  <a class="hwp-back-link" href="{% url 'happy_workplace:index' %}">← กลับ Happy Workplace</a>
+</div>
+<div class="hwp-wordle-layout">
+  <div class="hwp-game-shell hwp-wordle-main">
+    <div class="hwp-game-panel" id="tPanel">
+      <h1>พิมพ์เร็ว</h1>
+      <p class="sub">พิมพ์คำที่ขึ้นให้เร็วและถูกต้องที่สุดภายในเวลาที่กำหนด ({{ typing_settings.session_minutes }} นาที) กด Space เพื่อไปคำถัดไป เริ่มจับเวลาเมื่อเริ่มพิมพ์ตัวแรก</p>
+
+      <p class="hwp-play-note" id="tPlayNote"></p>
+
+      <div class="t-langs" id="tLangs">
+        <button type="button" class="t-lang is-active" data-lang="th">ไทย</button>
+        <button type="button" class="t-lang" data-lang="en">English</button>
+      </div>
+
+      <div class="t-stats">
+        <div class="wd-stat"><span class="wd-stat-label">เวลาเหลือ</span><span class="wd-stat-value" id="tTime">{% widthratio typing_settings.session_minutes 1 60 %}</span></div>
+        <div class="wd-stat"><span class="wd-stat-label">คำต่อนาที (สด)</span><span class="wd-stat-value" id="tWpm">0</span></div>
+      </div>
+
+      <div class="t-words" id="tWords"></div>
+      <input type="text" class="t-input" id="tInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="เริ่มพิมพ์ที่นี่...">
+      <button type="button" class="hwp-back-link g-linkbtn" id="tRestart">เริ่มใหม่</button>
+
+      <div class="t-result" id="tResult" style="display:none;">
+        <h2>หมดเวลา!</h2>
+        <div class="t-result-grid">
+          <div class="wd-stat"><span class="wd-stat-label">คำต่อนาที</span><span class="wd-stat-value" id="tResWpm">0</span></div>
+          <div class="wd-stat"><span class="wd-stat-label">ความแม่นยำ</span><span class="wd-stat-value" id="tResAcc">0%</span></div>
+          <div class="wd-stat"><span class="wd-stat-label">พิมพ์ถูก (คำ)</span><span class="wd-stat-value" id="tResWords">0</span></div>
+        </div>
+        <input type="text" class="pa-input" id="tName" placeholder="ชื่อสำหรับตารางคะแนน" maxlength="25">
+        <div>
+          <button type="button" class="fs-shake-btn" id="tSaveBtn">บันทึกคะแนน</button>
+          <button type="button" class="hwp-back-link g-linkbtn" id="tAgainBtn">เล่นอีกครั้งโดยไม่บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hwp-wordle-side">
+    <div class="hwp-game-panel" style="text-align:left;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0 0 14px;text-align:center;">อันดับ <span id="tLbLang">(ไทย)</span></h3>
+      <div id="tLeaderboard"></div>
+      {% if can_edit %}
+      <div class="wd-admin-box">
+        <div class="wd-admin-title">ตั้งค่าเกม (Admin)</div>
+        <form method="post" action="{% url 'happy_workplace:typing_settings_update' %}">
+          {% csrf_token %}
+          {% for field in settings_form %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึกการตั้งค่า</button>
+        </form>
+        <form method="post" action="{% url 'happy_workplace:play_game_limit_update' 'typing' %}" class="wd-limit-form">
+          {% csrf_token %}
+          {% for field in play_form %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึกจำนวนครั้ง</button>
+        </form>
+        <a class="btn-delete wd-reset-link" href="{% url 'happy_workplace:game_scores_reset' 'typing_th' %}">รีเซ็ตตารางคะแนน (ไทย)</a><br>
+        <a class="btn-delete wd-reset-link" href="{% url 'happy_workplace:game_scores_reset' 'typing_en' %}">รีเซ็ตตารางคะแนน (อังกฤษ)</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{{ leaderboards|json_script:"tLeaderboardData" }}
+{{ play|json_script:"tPlayData" }}
+{{ typing_settings_json|json_script:"tSettingsData" }}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/hwp_leaderboard.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/hwp_play.js' %}?v={% now 'U' %}"></script>
+<script>
+(function(){
+  var CFG = JSON.parse(document.getElementById("tSettingsData").textContent);
+  var DURATION = CFG.sessionSeconds;
+  var POOLS = {
+    th: ["บ้าน","น้ำ","ข้าว","รถ","เดิน","กิน","นอน","วัน","เวลา","งาน","เพื่อน","ครอบครัว","โรงเรียน","ทำงาน","สนุก","ความสุข","สุขภาพ","อาหาร","ทะเล","ภูเขา","ต้นไม้","ดอกไม้","ท้องฟ้า","ดวงดาว","ฝนตก","อากาศ","เย็นสบาย","เครื่องปรับอากาศ","ห้อง","ลูกค้า","บริการ","คุณภาพ","มาตรฐาน","ทดสอบ","เอกสาร","ระบบ","ข้อมูล","ทีมงาน","ประชุม","โครงการ","เป้าหมาย","ความสำเร็จ","พัฒนา","เรียนรู้","ตั้งใจ","พยายาม","อดทน","ขอบคุณ","สวัสดี","ยินดี","ช่วยเหลือ","ปลอดภัย","รวดเร็ว","ง่ายดาย","ชัดเจน","ถูกต้อง","สร้างสรรค์","ความคิด","ตัวเลข","คอมพิวเตอร์","โทรศัพท์","อินเทอร์เน็ต","เมืองไทย","กรุงเทพ","เชียงใหม่","ประเทศ","ประชาชน","วัฒนธรรม","ประเพณี","ธรรมชาติ","สิ่งแวดล้อม","พลังงาน","ไฟฟ้า","อุณหภูมิ","ความชื้น","ความเย็น","ประหยัด","ผู้จัดการ","พนักงาน","ผลิตภัณฑ์","การตลาด","การขาย","การเงิน","บัญชี","สัญญา","ใบเสนอราคา","ส่งมอบ","ตรวจสอบ","ปรับปรุง","แก้ไข","วางแผน","ติดตาม","รายงาน","สรุปผล","วันหยุด","ท่องเที่ยว","เดินทาง","อร่อย","สบายใจ","หัวเราะ","รอยยิ้ม","กำลังใจ"],
+    en: ["the","people","work","time","team","good","great","office","market","product","quality","service","customer","system","report","project","goal","plan","task","meeting","design","develop","improve","learn","share","build","speed","focus","smile","happy","energy","future","simple","clear","strong","quick","careful","thank","please","welcome","morning","evening","weekend","coffee","lunch","music","movie","travel","holiday","friend","family","health","garden","river","mountain","ocean","summer","winter","rain","cloud","light","water","paper","phone","screen","keyboard","mouse","window","door","table","chair","street","city","country","world","story","idea","answer","question","reason","result","change","choice","chance","success","practice","balance","comfort","cooling","control","measure","record","update","review","support","deliver","prepare","create","connect","explore","discover","imagine","believe","achieve","together","tomorrow","everything"]
+  };
+  var LANG_LABEL = {th: "(ไทย)", en: "(อังกฤษ)"};
+  var GAME_KEY = {th: "typing_th", en: "typing_en"};
+  var SCORE_URL_BASE = "{% url 'happy_workplace:game_score_submit' 'GAMEKEY' %}";
+  var CSRF = "{{ csrf_token }}";
+  var PLAY_URL = "{% url 'happy_workplace:play_start' 'typing' %}";
+  var playState = JSON.parse(document.getElementById("tPlayData").textContent);
+  var boards = JSON.parse(document.getElementById("tLeaderboardData").textContent);
+
+  var lang = "th", words = [], idx = 0, started = false, finished = false;
+  var timeLeft = DURATION, timer = null, startedAt = 0;
+  var correctChars = 0, correctWords = 0, attempted = 0;
+
+  var wordsEl = document.getElementById("tWords");
+  var inputEl = document.getElementById("tInput");
+  var timeEl = document.getElementById("tTime");
+  var wpmEl = document.getElementById("tWpm");
+  var resultEl = document.getElementById("tResult");
+  var lbEl = document.getElementById("tLeaderboard");
+
+  function shuffle(a){
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function renderLb(){
+    HwpLeaderboard.render(lbEl, boards[GAME_KEY[lang]], "แม่นยำ");
+    document.getElementById("tLbLang").textContent = LANG_LABEL[lang];
+  }
+  function currentWpm(){
+    var elapsed = Math.max((Date.now() - startedAt) / 1000, 1);
+    return Math.floor((correctChars / 5) / (elapsed / 60));
+  }
+
+  function build(){
+    words = [];
+    for (var k = 0; k < 5; k++) words = words.concat(shuffle(POOLS[lang]));
+    wordsEl.innerHTML = words.map(function(w, i){ return '<span class="t-w" id="tw' + i + '">' + w + '</span>'; }).join(" ");
+    wordsEl.scrollTop = 0;
+    mark(0, "current");
+  }
+  function mark(i, cls){ var el = document.getElementById("tw" + i); if (el) el.className = "t-w " + cls; }
+
+  function reset(){
+    clearInterval(timer);
+    idx = 0; started = false; finished = false; timeLeft = DURATION;
+    correctChars = 0; correctWords = 0; attempted = 0;
+    timeEl.textContent = DURATION; wpmEl.textContent = 0;
+    inputEl.value = ""; inputEl.disabled = false;
+    resultEl.style.display = "none";
+    build();
+    refreshPlayUi();
+    if (!inputEl.disabled) inputEl.focus();
+  }
+
+  function refreshPlayUi(){
+    var out = HwpPlay.exhausted(playState);
+    var activeRound = started && !finished;
+    var note = document.getElementById("tPlayNote");
+    note.textContent = activeRound && out
+      ? "กำลังเล่นรอบสุดท้ายของวันนี้ — เล่นต่อได้จนหมดเวลา"
+      : HwpPlay.note(playState);
+    note.classList.toggle("is-out", out && !activeRound);
+    // `remaining` is the right to START another round. Reaching zero after
+    // this round has been accepted must never disable the round in progress.
+    inputEl.disabled = out && !activeRound;
+    inputEl.placeholder = out && !activeRound
+      ? "วันนี้เล่นครบจำนวนครั้งแล้ว"
+      : (activeRound ? "พิมพ์ต่อได้จนหมดเวลา..." : "เริ่มพิมพ์ที่นี่...");
+  }
+
+  function finish(){
+    finished = true;
+    clearInterval(timer);
+    inputEl.disabled = true;
+    var wpm = Math.floor(correctChars / 5);
+    var acc = attempted ? Math.round(correctWords / attempted * 100) : 0;
+    document.getElementById("tResWpm").textContent = wpm;
+    document.getElementById("tResAcc").textContent = acc + "%";
+    document.getElementById("tResWords").textContent = correctWords;
+    resultEl.setAttribute("data-wpm", wpm);
+    resultEl.setAttribute("data-acc", acc);
+    document.getElementById("tSaveBtn").style.display = wpm > 0 ? "" : "none";
+    resultEl.style.display = "block";
+  }
+
+  function tick(){
+    timeLeft = DURATION - Math.floor((Date.now() - startedAt) / 1000);
+    if (timeLeft <= 0) { timeEl.textContent = 0; finish(); return; }
+    timeEl.textContent = timeLeft;
+    wpmEl.textContent = currentWpm();
+  }
+
+  function submitWord(){
+    var typed = inputEl.value.trim().normalize("NFC");
+    inputEl.value = "";
+    if (!typed) return;
+    var target = words[idx].normalize("NFC");
+    attempted++;
+    if (typed === target) { correctWords++; correctChars += target.length + 1; mark(idx, "ok"); }
+    else mark(idx, "bad");
+    idx++;
+    mark(idx, "current");
+    var cur = document.getElementById("tw" + idx);
+    if (cur) wordsEl.scrollTop = Math.max(0, cur.offsetTop - wordsEl.offsetTop - 8);
+  }
+
+  inputEl.addEventListener("input", function(){
+    if (finished) return;
+    if (!started) {
+      started = true; startedAt = Date.now();
+      timer = setInterval(tick, 250);
+      HwpPlay.start(PLAY_URL, CSRF).then(function(r){
+        playState = r;
+        if (!r.ok) reset(); else refreshPlayUi();
+      }).catch(function(){});
+    }
+    var v = inputEl.value;
+    if (/\s$/.test(v)) { submitWord(); return; }
+    var target = (words[idx] || "").normalize("NFC");
+    mark(idx, target.indexOf(v.normalize("NFC")) === 0 ? "current" : "current wrong");
+  });
+
+  document.getElementById("tLangs").addEventListener("click", function(e){
+    var b = e.target.closest(".t-lang");
+    if (!b || b.getAttribute("data-lang") === lang) return;
+    lang = b.getAttribute("data-lang");
+    Array.prototype.forEach.call(document.querySelectorAll(".t-lang"), function(x){
+      x.classList.toggle("is-active", x === b);
+    });
+    renderLb();
+    reset();
+  });
+  document.getElementById("tRestart").addEventListener("click", reset);
+  document.getElementById("tAgainBtn").addEventListener("click", reset);
+
+  document.getElementById("tSaveBtn").addEventListener("click", function(){
+    var btn = this;
+    var name = document.getElementById("tName").value.trim() || "ไม่ระบุชื่อ";
+    var wpm = parseInt(resultEl.getAttribute("data-wpm"), 10);
+    var acc = resultEl.getAttribute("data-acc");
+    btn.disabled = true;
+    HwpLeaderboard.submit(SCORE_URL_BASE.replace("GAMEKEY", GAME_KEY[lang]), CSRF, {name: name, score: wpm, detail: acc + "%"})
+      .then(function(data){
+        boards[GAME_KEY[lang]] = data.leaderboard;
+        renderLb();
+        document.getElementById("tName").value = "";
+        reset();
+      })
+      .catch(function(){ alert("บันทึกคะแนนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); })
+      .then(function(){ btn.disabled = false; });
+  });
+
+  renderLb();
+  reset();
+})();
+</script>
+{% endblock %}

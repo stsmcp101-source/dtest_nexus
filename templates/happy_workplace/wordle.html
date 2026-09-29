@@ -1,0 +1,393 @@
+{% extends "base/base.html" %}
+{% load static perms %}
+{% block title %}Wordle — Happy Workplace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+{% has_perm "happy_workplace.edit" as can_edit %}
+<div class="hwp-wordle-layout-wrap">
+  <a class="hwp-back-link" href="{% url 'happy_workplace:index' %}">← กลับ Happy Workplace</a>
+</div>
+<div class="hwp-wordle-layout">
+  <div class="hwp-game-shell hwp-wordle-main">
+    <div class="hwp-game-panel" id="wdIntro">
+      <h1>Wordle</h1>
+      <p class="sub">ทายคำศัพท์ภาษาอังกฤษ 5 ตัวอักษร ภายใน {{ wordle_settings.max_guesses }} ครั้งต่อคำ แข่งกับเวลา {{ wordle_settings.session_minutes }} นาที ทายถูกแล้วไปคำถัดไปทันที ยิ่งทายถูกไวยิ่งได้คะแนนเยอะ (เต็มคำละ 10 คะแนน ทายผิดแต่ละครั้ง -{{ wordle_settings.penalty_per_wrong }})</p>
+      <p class="hwp-play-note" id="wdPlayNote"></p>
+      <button type="button" class="fs-shake-btn" id="wdStartBtn">เริ่มเล่น</button>
+    </div>
+
+    <div class="hwp-game-panel" id="wdPlayArea" style="display:none;">
+      <div class="wd-stats-bar">
+        <div class="wd-stat"><span class="wd-stat-label">เวลาเหลือ</span><span class="wd-stat-value" id="wdTimer">{{ wordle_settings.session_minutes|stringformat:"02d" }}:00</span></div>
+        <div class="wd-stat"><span class="wd-stat-label">คะแนน</span><span class="wd-stat-value" id="wdScore">0</span></div>
+        <div class="wd-stat"><span class="wd-stat-label">ทายถูก</span><span class="wd-stat-value" id="wdCorrectCount">0</span></div>
+      </div>
+      <div class="wd-message" id="wdMessage">&nbsp;</div>
+      <div class="wd-board" id="wdBoard"></div>
+      <div class="wd-keyboard" id="wdKeyboard"></div>
+    </div>
+
+    <div class="hwp-game-panel" id="wdGameOver" style="display:none;">
+      <h1>หมดเวลา!</h1>
+      <p class="sub">คะแนนรวมของคุณ: <strong id="wdFinalScore"></strong> คะแนน · ทายถูก <strong id="wdFinalCorrect"></strong> คำ</p>
+      <input type="text" class="pa-input" id="wdNameInput" placeholder="กรอกชื่อสำหรับกระดานคะแนน (ไม่เกิน 25 ตัวอักษร)" maxlength="25">
+      <div><button type="button" class="fs-shake-btn" id="wdSaveBtn">บันทึกคะแนน</button></div>
+      <p class="hwp-play-note" id="wdPlayNote2" style="margin-top:14px;"></p>
+      <div><button type="button" class="hwp-back-link" style="border:none;background:none;cursor:pointer;margin-top:4px;" id="wdPlayAgainBtn">เล่นอีกครั้งโดยไม่บันทึกคะแนน</button></div>
+    </div>
+  </div>
+
+  <div class="hwp-wordle-side">
+    <div class="hwp-game-panel" style="text-align:left;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0 0 14px;text-align:center;">อันดับคะแนนสูงสุด</h3>
+      <div id="wdLeaderboardList"></div>
+      {% if can_edit %}
+      <div class="wd-admin-box">
+        <div class="wd-admin-title">ตั้งค่าเกม (Admin)</div>
+        <form method="post" action="{% url 'happy_workplace:wordle_settings_update' %}">
+          {% csrf_token %}
+          {% for field in settings_form %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึกการตั้งค่า</button>
+        </form>
+        <form method="post" action="{% url 'happy_workplace:play_game_limit_update' 'wordle' %}" class="wd-limit-form">
+          {% csrf_token %}
+          {% for field in play_form %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึกจำนวนครั้ง</button>
+        </form>
+        <a class="btn-delete wd-reset-link" href="{% url 'happy_workplace:wordle_reset_scores' %}">รีเซ็ตตารางคะแนน</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{{ leaderboard|json_script:"wdLeaderboardData" }}
+{{ wordle_settings_json|json_script:"wdSettingsData" }}
+{{ play|json_script:"wdPlayData" }}
+{{ wordle_words|json_script:"wdWordsData" }}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/hwp_play.js' %}?v={% now 'U' %}"></script>
+<script>
+(function(){
+  var WORDS = JSON.parse(document.getElementById("wdWordsData").textContent);
+
+  var CFG = JSON.parse(document.getElementById("wdSettingsData").textContent);
+  var MAX_ROWS = CFG.maxGuesses;
+  var PENALTY = CFG.penaltyPerWrong;
+  var WORD_LEN = 5;
+  var SESSION_SECONDS = CFG.sessionSeconds;
+  var TIME_BONUS_SECONDS = 10;
+  var SCORE_URL = "{% url 'happy_workplace:wordle_submit_score' %}";
+  var CSRF_TOKEN = "{{ csrf_token }}";
+  var leaderboardData = JSON.parse(document.getElementById("wdLeaderboardData").textContent);
+
+  function renderLeaderboard(){
+    var list = leaderboardData;
+    var el = document.getElementById("wdLeaderboardList");
+    var head = '<div class="wd-lb-row wd-lb-head">' +
+      '<span>ลำดับ</span><span>ชื่อ</span><span>คำศัพท์</span><span>คะแนน</span>' +
+    '</div>';
+    if(list.length === 0){
+      el.innerHTML = head + '<p class="hwp-empty">ยังไม่มีใครทำคะแนนไว้</p>';
+      return;
+    }
+    el.innerHTML = head + list.map(function(row, i){
+      return '<div class="wd-lb-row">' +
+        '<span class="wd-lb-rank">'+(i+1)+'</span>' +
+        '<span class="wd-lb-name">'+ escapeHtml(row.name) +'</span>' +
+        '<span class="wd-lb-words">'+row.wordsCorrect+'</span>' +
+        '<span class="wd-lb-score">'+row.score+'</span>' +
+      '</div>';
+    }).join("");
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  var introEl = document.getElementById("wdIntro");
+  var startBtn = document.getElementById("wdStartBtn");
+  var playAreaEl = document.getElementById("wdPlayArea");
+  var gameOverEl = document.getElementById("wdGameOver");
+
+  renderLeaderboard();
+
+  var board = document.getElementById("wdBoard");
+  var kb = document.getElementById("wdKeyboard");
+  var msg = document.getElementById("wdMessage");
+  var timerEl = document.getElementById("wdTimer");
+  var scoreEl = document.getElementById("wdScore");
+  var correctCountEl = document.getElementById("wdCorrectCount");
+
+  var answer = "", current = "", row = 0, roundLocked = false;
+  var totalScore = 0, wordsCorrect = 0, usedWords = [];
+  var secondsLeft = SESSION_SECONDS, timerHandle = null;
+  var keyStates = {};
+
+  function pickWord(){
+    var pool = WORDS.filter(function(w){ return usedWords.indexOf(w) === -1; });
+    if(pool.length === 0){ usedWords = []; pool = WORDS; }
+    var w = pool[Math.floor(Math.random()*pool.length)];
+    usedWords.push(w);
+    return w;
+  }
+
+  function buildBoard(){
+    board.innerHTML = "";
+    for(var r=0;r<MAX_ROWS;r++){
+      var rowEl = document.createElement("div");
+      rowEl.className = "wd-row";
+      rowEl.id = "wdRow"+r;
+      for(var c=0;c<WORD_LEN;c++){
+        var tile = document.createElement("div");
+        tile.className = "wd-tile";
+        rowEl.appendChild(tile);
+      }
+      board.appendChild(rowEl);
+    }
+  }
+
+  function buildKeyboard(){
+    kb.innerHTML = "";
+    keyStates = {};
+    var rows = [["Q","W","E","R","T","Y","U","I","O","P"],
+                ["A","S","D","F","G","H","J","K","L"],
+                ["ENTER","Z","X","C","V","B","N","M","BACK"]];
+    rows.forEach(function(keys){
+      var krow = document.createElement("div");
+      krow.className = "wd-krow";
+      keys.forEach(function(k){
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "wd-key" + ((k==="ENTER"||k==="BACK") ? " wide" : "");
+        btn.textContent = k === "BACK" ? "⌫" : k;
+        btn.dataset.key = k;
+        btn.addEventListener("click", function(){ handleKey(this.dataset.key); });
+        krow.appendChild(btn);
+      });
+      kb.appendChild(krow);
+    });
+  }
+
+  function setMsg(text){ msg.textContent = text || " "; }
+
+  function resetKeyboard(){
+    keyStates = {};
+    kb.querySelectorAll(".wd-key").forEach(function(btn){
+      btn.classList.remove("correct","present","absent");
+    });
+  }
+
+  function startNewWord(){
+    answer = pickWord();
+    current = "";
+    row = 0;
+    roundLocked = false;
+    buildBoard();
+    resetKeyboard();
+    setMsg("");
+  }
+
+  function handleKey(key){
+    if(roundLocked || secondsLeft <= 0) return;
+    if(key === "BACK"){
+      current = current.slice(0,-1);
+      renderCurrent();
+    } else if(key === "ENTER"){
+      submitGuess();
+    } else if(/^[A-Z]$/.test(key) && current.length < WORD_LEN){
+      current += key;
+      renderCurrent();
+    }
+  }
+
+  function renderCurrent(){
+    var rowEl = document.getElementById("wdRow"+row);
+    if(!rowEl) return;
+    var tiles = rowEl.children;
+    for(var i=0;i<WORD_LEN;i++){
+      tiles[i].textContent = current[i] || "";
+      tiles[i].classList.toggle("filled", !!current[i]);
+    }
+  }
+
+  function submitGuess(){
+    if(current.length !== WORD_LEN){
+      setMsg("กรอกให้ครบ 5 ตัวอักษร");
+      shakeRow();
+      return;
+    }
+    roundLocked = true;
+    var guess = current;
+    var rowEl = document.getElementById("wdRow"+row);
+    var tiles = rowEl.children;
+    var answerArr = answer.split("");
+    var result = new Array(WORD_LEN).fill("absent");
+
+    for(var i=0;i<WORD_LEN;i++){
+      if(guess[i] === answerArr[i]){ result[i] = "correct"; answerArr[i] = null; }
+    }
+    for(i=0;i<WORD_LEN;i++){
+      if(result[i] === "correct") continue;
+      var idx = answerArr.indexOf(guess[i]);
+      if(idx !== -1){ result[i] = "present"; answerArr[idx] = null; }
+    }
+    for(i=0;i<WORD_LEN;i++){
+      (function(i){
+        setTimeout(function(){
+          tiles[i].classList.add(result[i], "flip");
+          var letter = guess[i];
+          var order = {absent:0, present:1, correct:2};
+          if(!keyStates[letter] || order[result[i]] > order[keyStates[letter]]){
+            keyStates[letter] = result[i];
+            var keyBtn = kb.querySelector('[data-key="'+letter+'"]');
+            if(keyBtn){ keyBtn.classList.remove("absent","present","correct"); keyBtn.classList.add(result[i]); }
+          }
+        }, i*120);
+      })(i);
+    }
+
+    setTimeout(function(){
+      if(guess === answer){
+        var wordScore = Math.max(0, 10 - row * PENALTY);
+        totalScore += wordScore;
+        wordsCorrect++;
+        scoreEl.textContent = totalScore;
+        correctCountEl.textContent = wordsCorrect;
+        secondsLeft += TIME_BONUS_SECONDS;
+        timerEl.textContent = formatTime(secondsLeft);
+        setMsg("ถูกต้อง! +" + wordScore + " คะแนน · +" + TIME_BONUS_SECONDS + " วินาที");
+        setTimeout(function(){ if(secondsLeft > 0) startNewWord(); }, 900);
+      } else if(row === MAX_ROWS-1){
+        setMsg("หมดโอกาส คำตอบคือ " + answer);
+        setTimeout(function(){ if(secondsLeft > 0) startNewWord(); }, 1300);
+      } else {
+        setMsg("");
+        row++;
+        current = "";
+        roundLocked = false;
+      }
+    }, WORD_LEN*120 + 200);
+  }
+
+  function shakeRow(){
+    var rowEl = document.getElementById("wdRow"+row);
+    if(!rowEl) return;
+    rowEl.classList.add("wd-shake");
+    setTimeout(function(){ rowEl.classList.remove("wd-shake"); }, 350);
+  }
+
+  document.addEventListener("keydown", function(e){
+    if(playAreaEl.style.display === "none") return;
+    if(e.key === "Backspace"){ handleKey("BACK"); }
+    else if(e.key === "Enter"){ handleKey("ENTER"); }
+    else if(/^[a-zA-Z]$/.test(e.key)){ handleKey(e.key.toUpperCase()); }
+  });
+
+  function formatTime(s){
+    var m = Math.floor(s/60), sec = s%60;
+    return (m<10?"0":"")+m+":"+(sec<10?"0":"")+sec;
+  }
+
+  function tick(){
+    secondsLeft--;
+    timerEl.textContent = formatTime(Math.max(secondsLeft,0));
+    if(secondsLeft <= 0){
+      clearInterval(timerHandle);
+      endSession();
+    }
+  }
+
+  function endSession(){
+    playAreaEl.style.display = "none";
+    gameOverEl.style.display = "block";
+    document.getElementById("wdFinalScore").textContent = totalScore;
+    document.getElementById("wdFinalCorrect").textContent = wordsCorrect;
+  }
+
+  function startGame(){
+    introEl.style.display = "none";
+    gameOverEl.style.display = "none";
+    playAreaEl.style.display = "block";
+    totalScore = 0; wordsCorrect = 0; usedWords = [];
+    secondsLeft = SESSION_SECONDS;
+    timerEl.textContent = formatTime(secondsLeft);
+    scoreEl.textContent = "0";
+    correctCountEl.textContent = "0";
+    buildKeyboard();
+    startNewWord();
+    clearInterval(timerHandle);
+    timerHandle = setInterval(tick, 1000);
+  }
+
+  var PLAY_URL = "{% url 'happy_workplace:play_start' 'wordle' %}";
+  var playState = JSON.parse(document.getElementById("wdPlayData").textContent);
+  var againBtn = document.getElementById("wdPlayAgainBtn");
+  function refreshPlayUi(){
+    var text = HwpPlay.note(playState), out = HwpPlay.exhausted(playState);
+    ["wdPlayNote", "wdPlayNote2"].forEach(function(id){
+      var el = document.getElementById(id);
+      el.textContent = text;
+      el.classList.toggle("is-out", out);
+    });
+    startBtn.disabled = out;
+    againBtn.disabled = out;
+    againBtn.style.display = out ? "none" : "";
+  }
+  function tryStart(){
+    startBtn.disabled = true; againBtn.disabled = true;
+    HwpPlay.start(PLAY_URL, CSRF_TOKEN).then(function(r){
+      playState = r;
+      refreshPlayUi();
+      if (r.ok) startGame();
+    }).catch(function(){
+      refreshPlayUi();
+      alert("เริ่มเกมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    });
+  }
+  startBtn.addEventListener("click", tryStart);
+  refreshPlayUi();
+
+  var saveBtn = document.getElementById("wdSaveBtn");
+  saveBtn.addEventListener("click", function(){
+    var nameInput = document.getElementById("wdNameInput");
+    var name = nameInput.value.trim() || "ไม่ระบุชื่อ";
+    saveBtn.disabled = true;
+    fetch(SCORE_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": CSRF_TOKEN},
+      body: JSON.stringify({name: name, score: totalScore, wordsCorrect: wordsCorrect})
+    }).then(function(resp){
+      if(!resp.ok) throw new Error("save failed");
+      return resp.json();
+    }).then(function(data){
+      leaderboardData = data.leaderboard;
+      nameInput.value = "";
+      renderLeaderboard();
+      gameOverEl.style.display = "none";
+      introEl.style.display = "block";
+    }).catch(function(){
+      alert("บันทึกคะแนนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    }).then(function(){
+      saveBtn.disabled = false;
+    });
+  });
+
+  againBtn.addEventListener("click", function(){
+    document.getElementById("wdNameInput").value = "";
+    tryStart();
+  });
+})();
+</script>
+{% endblock %}

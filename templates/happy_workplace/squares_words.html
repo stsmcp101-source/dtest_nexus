@@ -1,0 +1,50 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}คลังคำศัพท์ Squares — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">คลังคำศัพท์ Squares</h1>
+      <p class="page-desc">ทั้งหมด {{ total }} คำ · เกมสุ่มคำจากคลังนี้มาสร้างตารางใหม่ทุกครั้ง (คำใหม่ที่เพิ่มจะถูกใช้ทันที)</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost btn-app" href="{% url 'happy_workplace:squares' %}">กลับไปเกม</a>
+    <a class="btn btn-primary btn-app" href="{% url 'happy_workplace:squares_word_create' %}">+ เพิ่มคำศัพท์</a>
+  </div>
+</div>
+
+<div class="content-card">
+  <form method="get" class="sq-filter">
+    <input type="text" name="q" value="{{ q }}" class="form-input" placeholder="ค้นหาคำศัพท์หรือความหมาย">
+    <select name="cat" class="form-input">
+      <option value="">ทุกหมวดหมู่</option>
+      {% for value, label in categories %}
+      <option value="{{ value }}" {% if cat == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-app btn-sm">ค้นหา</button>
+    {% if q or cat %}<a class="btn btn-ghost btn-app btn-sm" href="{% url 'happy_workplace:squares_words' %}">ล้างตัวกรอง</a>{% endif %}
+  </form>
+  <p style="font-size:12.5px;color:var(--muted);margin:10px 0 12px;">แสดง {{ words|length }} คำ</p>
+  {% for w in words %}
+  <div class="hwp-manage-row">
+    <div class="hwp-manage-row-body">
+      <div class="title">{{ w.word }} <span class="hwp-pin-badge">({{ w.get_category_display }})</span></div>
+      <div class="meta">{{ w.meaning }}</div>
+    </div>
+    <div class="hwp-manage-row-actions">
+      <a class="btn-edit" href="{% url 'happy_workplace:squares_word_edit' w.pk %}">Edit</a>
+      <a class="btn-delete" href="{% url 'happy_workplace:squares_word_delete' w.pk %}">Delete</a>
+    </div>
+  </div>
+  {% empty %}
+  <p class="hwp-empty">ไม่พบคำศัพท์ที่ตรงกับเงื่อนไข</p>
+  {% endfor %}
+</div>
+{% endblock %}

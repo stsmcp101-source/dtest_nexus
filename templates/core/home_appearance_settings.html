@@ -1,0 +1,90 @@
+{% extends "base/base.html" %}
+{% block title %}รูปภาพหน้าแรก — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 5-5 4 4"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">รูปภาพหน้าแรก</h1>
+      <p class="page-desc">จัดการพื้นหลังหน้าแรกและรูปภาพเมนูในหน้าเดียวกัน อัปโหลดรูปภาพที่นี่แทนการวางไฟล์ในโฟลเดอร์ static เพื่อให้หน้าแรกอัปเดตทันทีโดยไม่ติดแคชของเบราว์เซอร์</p>
+    </div>
+  </div>
+</div>
+
+<div class="content-card" style="margin-bottom:24px;">
+  <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0 0 16px;">พื้นหลังหน้าแรก</h3>
+  <div style="position:relative;width:100%;max-width:480px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#08283f;margin-bottom:20px;">
+    {% if settings_obj.hero_bg_video %}
+      <video src="{{ settings_obj.hero_bg_video.url }}" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+    {% elif settings_obj.hero_bg_image %}
+      <img src="{{ settings_obj.hero_bg_image.url }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+    {% else %}
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;opacity:.7;">ยังไม่ได้อัปโหลด — ใช้ไฟล์ static/img/home/hero-bg.* แทน</div>
+    {% endif %}
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="form_name" value="hero">
+    <div class="form-group">
+      <label>{{ hero_form.hero_bg_image.label }}</label>
+      {{ hero_form.hero_bg_image }}
+      {% if hero_form.hero_bg_image.errors %}<p class="field-error">{{ hero_form.hero_bg_image.errors|join:", " }}</p>{% endif %}
+    </div>
+    <div class="form-group">
+      <label>{{ hero_form.hero_bg_video.label }}</label>
+      {{ hero_form.hero_bg_video }}
+      {% if hero_form.hero_bg_video.errors %}<p class="field-error">{{ hero_form.hero_bg_video.errors|join:", " }}</p>{% endif %}
+      <p style="color:var(--muted);font-size:13px;margin-top:6px;">ถ้ามีวิดีโอ จะแสดงทับรูปภาพด้านบนบนหน้าแรก ติ๊ก "Clear" เพื่อลบไฟล์ที่อัปโหลดไว้และกลับไปใช้ไฟล์ static แทน</p>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app">บันทึกพื้นหลัง</button>
+    </div>
+  </form>
+</div>
+
+<div class="content-card" style="margin-bottom:24px;">
+  <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0 0 16px;">รูปภาพเมนู</h3>
+  <p style="color:var(--muted);font-size:13px;margin:-8px 0 16px;">เมนูที่ไม่ได้อัปโหลดรูปจะแสดงเป็นไอคอนเส้นแทน</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="form_name" value="modules">
+    {{ module_formset.management_form }}
+    {% for form in module_formset %}
+    <div style="display:flex;align-items:center;gap:20px;padding:18px 0;{% if not forloop.last %}border-bottom:1px solid var(--line);{% endif %}">
+      {{ form.id }}
+      <div style="width:130px;height:76px;border-radius:8px;overflow:hidden;background:#0e2036;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        {% if form.instance.background_image %}
+          {% if form.instance.background_image_processed %}
+            <img src="{{ form.instance.background_image_processed.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+          {% else %}
+            <img src="{{ form.instance.background_image.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+          {% endif %}
+        {% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4a6580" stroke-width="1.2" style="width:32px;height:32px;">{{ form.instance.icon_svg_path|default:"<circle cx='12' cy='12' r='9'/>"|safe }}</svg>
+        {% endif %}
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:2px;">{{ form.instance.short_tag }}</div>
+        <div style="font-weight:600;color:var(--navy-700);margin-bottom:8px;">{{ form.instance.name }}</div>
+        {{ form.background_image }}
+        {% if form.background_image.errors %}<p class="field-error">{{ form.background_image.errors|join:", " }}</p>{% endif %}
+        <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <label style="font-size:12.5px;color:var(--muted);">{{ form.background_image_speed.label }}:</label>
+          {{ form.background_image_speed }}
+          <span style="font-size:11.5px;color:var(--muted);">(1 = ปกติ, มากกว่า 1 = ช้าลง, น้อยกว่า 1 = เร็วขึ้น — มีผลเฉพาะไฟล์ GIF เคลื่อนไหว)</span>
+        </div>
+        {% if form.background_image_speed.errors %}<p class="field-error">{{ form.background_image_speed.errors|join:", " }}</p>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    <div class="form-actions" style="margin-top:20px;">
+      <button type="submit" class="btn btn-primary btn-app">บันทึกรูปภาพเมนู</button>
+    </div>
+  </form>
+</div>
+
+<a class="btn btn-ghost btn-app" href="{% url 'core:home' %}">ดูหน้าแรก</a>
+{% endblock %}

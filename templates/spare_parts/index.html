@@ -1,0 +1,330 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Spare Parts — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/spare_parts.css' %}?v={% now 'U' %}">
+{% endblock %}
+
+{% block content %}
+<div class="spdb sp-locked-head" id="sp-locked-head">
+  {% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+
+  <div class="page-head">
+    <div class="page-head-left">
+      <div class="page-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </div>
+      <div>
+        <h1 class="page-title">Spare Part</h1>
+        <p class="page-desc">จัดการคลังอะไหล่สำหรับซ่อมบำรุงเครื่องทดสอบ — Support Team</p>
+      </div>
+    </div>
+    <div class="page-actions">
+      {% if can_edit %}
+      <button type="button" class="btn btn-app btn-ghost" id="sp-import-open">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+        Import
+      </button>
+      {% endif %}
+      <button type="button" class="btn btn-app btn-primary" id="sp-export-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 19h16"/></svg>
+        Export Excel
+      </button>
+      <a href="{% url 'internal:index' %}" class="btn btn-app btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+        กลับหน้า Internal
+      </a>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid5" id="kpi-grid">
+    <div class="kpi total"><div class="kpi-lbl">Parts ทั้งหมด</div><div class="kpi-val" id="k-total">—</div><div class="kpi-sub">รายการ</div></div>
+    <div class="kpi good"> <div class="kpi-lbl">In Stock</div><div class="kpi-val" id="k-in">—</div><div class="kpi-bar"></div></div>
+    <div class="kpi warn"> <div class="kpi-lbl">Low Stock (≤50%)</div><div class="kpi-val" id="k-low">—</div><div class="kpi-bar"></div></div>
+    <div class="kpi bad">  <div class="kpi-lbl">Out of Stock</div><div class="kpi-val" id="k-out">—</div><div class="kpi-bar"></div></div>
+    <div class="kpi total"><div class="kpi-lbl">เบิกสะสม</div><div class="kpi-val" id="k-wd">—</div><div class="kpi-sub">ครั้ง</div></div>
+  </div>
+
+  <!-- Alert + Sub-category breakdown -->
+  <div class="grid2">
+    <div class="card" id="card-alert" data-collapse-key="alert">
+      <div class="card-head">
+        <div class="card-head-left">
+          <button type="button" class="card-collapse-btn" data-collapse-toggle title="ย่อ/ขยาย">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="card-title">🔔 Auto Alert <span id="alert-count" class="sp-badge b-out" style="margin-left:4px"></span></div>
+        </div>
+        <span style="font-size:11px;color:var(--sp-dgray)">Low ≤50% หรือ Out of Stock</span>
+      </div>
+      <div class="card-body" id="alert-list" style="max-height:240px;overflow-y:auto"></div>
+    </div>
+    <div class="card" id="card-cats" data-collapse-key="cats">
+      <div class="card-head">
+        <div class="card-head-left">
+          <button type="button" class="card-collapse-btn" data-collapse-toggle title="ย่อ/ขยาย">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="card-title">📊 สต็อกตาม Sub-Category</div>
+        </div>
+      </div>
+      <div class="card-body" id="cat-list" style="max-height:240px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <div class="card sp-tabs-bar">
+    <div class="nav-tabs">
+      <button type="button" class="nav-tab active" data-tab="t-parts">📦 Parts List ({{ part_count }})</button>
+      {% if can_edit %}
+      <button type="button" class="nav-tab" data-tab="t-form">✏️ อัปเดตสต็อก</button>
+      {% endif %}
+      <button type="button" class="nav-tab" data-tab="t-log">📋 Transaction Log</button>
+    </div>
+  </div>
+</div>
+
+<div class="spdb" id="spdb-root"
+     data-tx-url="{% url 'spare_parts:api_transaction' %}"
+     data-import-url="{% url 'spare_parts:api_import' %}"
+     data-can-edit="{% if can_edit %}1{% else %}0{% endif %}">
+
+  <!-- Main panel -->
+  <div class="card" id="sp-main-panel">
+    <div class="card-body">
+      <!-- Parts list tab -->
+      <div class="tab-pane active" id="t-parts">
+        <div class="sbar" id="sp-sbar">
+          <input type="text" id="sq" placeholder="🔍 ค้นหา Part No / ชื่อ / Model...">
+          <select id="scat">
+            <option value="">ทุก Category</option>
+            {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+          </select>
+          <select id="ssub">
+            <option value="">ทุก Sub-Category</option>
+            {% for s in subcategories %}<option>{{ s }}</option>{% endfor %}
+          </select>
+          <select id="sst">
+            <option value="">ทุก Status</option>
+            <option value="IN STOCK">In Stock</option>
+            <option value="LOW STOCK">Low Stock</option>
+            <option value="OUT OF STOCK">Out of Stock</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table class="sp-tbl">
+            <thead><tr>
+              <th>Part No.</th><th>Description</th><th>Model/Spec</th>
+              <th>Cat.</th><th>Sub-Cat.</th><th>Mfr.</th>
+              <th style="text-align:center">Min</th>
+              <th style="text-align:center">Stock</th>
+              <th>Level %</th><th>Status</th><th>Location</th><th></th>
+            </tr></thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--sp-dgray);margin-top:8px" id="tbl-count"></div>
+      </div>
+
+      {% if can_edit %}
+      <!-- Form tab -->
+      <div class="tab-pane" id="t-form">
+        <div class="mode-tabs">
+          <button type="button" class="mtab m-receive"  id="mt-receive"  data-mode="receive">📦 รับเข้า</button>
+          <button type="button" class="mtab"            id="mt-withdraw" data-mode="withdraw">📤 เบิกออก</button>
+          <button type="button" class="mtab"            id="mt-update"   data-mode="update">✏️ แก้ไขข้อมูล</button>
+          <button type="button" class="mtab"            id="mt-replace"  data-mode="replace">🔄 เปลี่ยนทดแทน</button>
+          <button type="button" class="mtab"            id="mt-new"      data-mode="new">➕ เพิ่มใหม่</button>
+        </div>
+        <div class="hint-bar" id="f-hint"></div>
+        <div class="fg">
+
+          <div class="ff ff-full">
+            <label>Part Number *</label>
+            <div class="pn-wrap">
+              <input type="text" id="f-pn" placeholder="เช่น ME001, EE021..."
+                     style="text-transform:uppercase;padding-right:90px">
+              <span class="pn-tag" id="pn-tag" style="display:none"></span>
+            </div>
+          </div>
+
+          <div class="ff">
+            <label>Description (EN)</label>
+            <input type="text" id="f-desc" placeholder="ชื่ออะไหล่">
+          </div>
+
+          <div class="ff">
+            <label>Model / Spec</label>
+            <input type="text" id="f-model" placeholder="รุ่น / สเปค">
+          </div>
+
+          <div class="ff">
+            <label>Category</label>
+            <input type="text" id="f-cat" list="dl-cat" placeholder="พิมพ์หรือเลือก...">
+            <datalist id="dl-cat">
+              {% for c in categories %}<option>{{ c }}</option>{% endfor %}
+            </datalist>
+          </div>
+
+          <div class="ff">
+            <label>Sub-Category</label>
+            <input type="text" id="f-sub" list="sub-list" placeholder="พิมพ์หรือเลือก...">
+            <datalist id="sub-list">
+              {% for s in subcategories %}<option>{{ s }}</option>{% endfor %}
+            </datalist>
+          </div>
+
+          <div class="ff">
+            <label>Manufacturer</label>
+            <input type="text" id="f-mfr" list="mfr-list" placeholder="พิมพ์หรือเลือก...">
+            <datalist id="mfr-list"></datalist>
+          </div>
+
+          <div class="ff">
+            <label>Unit</label>
+            <input type="text" id="f-unit" list="unit-list" placeholder="EA">
+            <datalist id="unit-list">
+              <option>EA</option><option>SET</option><option>M</option>
+              <option>KG</option><option>PR</option><option>PCS</option><option>BOX</option>
+            </datalist>
+          </div>
+
+          <div class="ff">
+            <label>Unit Price (THB)</label>
+            <input type="number" id="f-price" placeholder="0" min="0">
+          </div>
+
+          <div class="ff">
+            <label>Min Stock</label>
+            <input type="number" id="f-min" placeholder="0" min="0">
+          </div>
+
+          <div class="ff">
+            <label id="qty-lbl">จำนวนที่รับเข้า</label>
+            <input type="number" id="f-qty" placeholder="0" min="0">
+          </div>
+
+          <div class="ff">
+            <label>Location</label>
+            <input type="text" id="f-loc" list="loc-list" placeholder="พิมพ์หรือเลือก...">
+            <datalist id="loc-list"></datalist>
+          </div>
+
+          <div class="ff">
+            <label>Lead Time (วัน)</label>
+            <input type="text" id="f-lead" placeholder="7">
+          </div>
+
+          <div class="ff">
+            <label>ผู้ดำเนินการ</label>
+            <input type="text" id="f-by" placeholder="ชื่อผู้ดำเนินการ">
+          </div>
+
+          <div class="ff">
+            <label>Team</label>
+            <input type="text" id="f-team" list="team-list" placeholder="พิมพ์หรือเลือก...">
+            <datalist id="team-list">
+              <option>RAC</option><option>PAC</option><option>EMC</option>
+              <option>SOUND</option><option>SUPPORT</option>
+            </datalist>
+          </div>
+
+          <div class="ff ff-full">
+            <label>หมายเหตุ / เหตุผล</label>
+            <input type="text" id="f-reason" list="reason-list"
+                   placeholder="เช่น ชำรุด / เปลี่ยนทดแทน / ตาม PM">
+            <datalist id="reason-list">
+              <option>ชำรุด / เสียหาย</option>
+              <option>เปลี่ยนทดแทนตาม PM</option>
+              <option>สั่งซื้อเพิ่ม</option>
+              <option>รับของจาก Supplier</option>
+              <option>เบิกใช้งาน</option>
+              <option>ตรวจนับสต็อก</option>
+              <option>อื่น ๆ</option>
+            </datalist>
+          </div>
+
+        </div>
+
+        <div id="diff-wrap" style="display:none">
+          <div class="diff-box">
+            <div class="ditem"><div class="dlbl">ก่อน</div><div class="dval" id="d-before" style="color:var(--sp-dgray)">—</div></div>
+            <div class="darrow">→</div>
+            <div class="ditem"><div class="dlbl">เปลี่ยน</div><div class="dval" id="d-delta">—</div></div>
+            <div class="darrow">→</div>
+            <div class="ditem"><div class="dlbl">หลัง</div><div class="dval" id="d-after">—</div></div>
+            <div class="ditem" style="margin-left:auto">
+              <div class="dlbl">% ของ Min</div>
+              <div style="font-size:14px;font-weight:700;color:var(--sp-navy)" id="d-pct">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="sp-btn sp-btn-ghost" id="sp-clear-btn">ล้าง</button>
+          <button type="button" class="sp-btn sp-btn-blue" id="f-submit">✓ บันทึก</button>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Log tab -->
+      <div class="tab-pane" id="t-log">
+        <div class="lf-bar">
+          <button type="button" class="lf active" data-filter="all">ทั้งหมด</button>
+          <button type="button" class="lf" data-filter="receive">📦 รับเข้า</button>
+          <button type="button" class="lf" data-filter="withdraw">📤 เบิกออก</button>
+          <button type="button" class="lf" data-filter="replace">🔄 เปลี่ยน</button>
+          <button type="button" class="lf" data-filter="update">✏️ แก้ไข</button>
+          <button type="button" class="lf" data-filter="new">➕ เพิ่มใหม่</button>
+        </div>
+        <div id="log-list" style="max-height:440px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+
+  {% if can_edit %}
+  <!-- Import Modal -->
+  <div class="sp-overlay" id="import-modal" style="display:none">
+    <div class="sp-modal">
+      <div class="sp-modal-head"><h2>📂 Import ข้อมูลจาก Excel</h2><button type="button" class="sp-modal-close" id="sp-import-close">✕</button></div>
+      <div class="sp-modal-body">
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">📊</div>
+          <div class="drop-title" id="drop-title">ลากไฟล์ Excel มาวางที่นี่</div>
+          <div class="drop-sub" id="drop-sub">รองรับ .xlsx | Sheet: "📦 Master Parts List"</div>
+        </div>
+        <input type="file" id="xl-input" accept=".xlsx,.xls" style="display:none">
+        <div id="import-opts" style="display:none;margin-top:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--sp-navy);margin-bottom:6px">เลือกวิธี Import:</div>
+          <label class="iopt selected" id="opt-merge" data-opt="merge"><input type="radio" name="im" value="merge" checked><div><div class="iopt-title">🔄 Merge — อัปเดต Current Stock เท่านั้น (แนะนำ)</div><div class="iopt-sub">Transaction Log เดิมยังอยู่ครบ เหมาะสำหรับอัปเดตสต็อกประจำเดือน</div></div></label>
+          <label class="iopt" id="opt-full" data-opt="full"><input type="radio" name="im" value="full"><div><div class="iopt-title">📋 Full Replace — แทนที่ Parts ทั้งหมด</div><div class="iopt-sub">Log เดิมยังอยู่ เหมาะเมื่อมีการเพิ่ม/แก้ไข Part ใน Excel</div></div></label>
+          <label class="iopt" id="opt-reset" data-opt="reset"><input type="radio" name="im" value="reset"><div><div class="iopt-title">🗑️ Full Reset — เริ่มต้นใหม่ทั้งหมด</div><div class="iopt-sub">ลบ Log เดิมด้วย เหมาะเมื่อต้องการเริ่มต้นระบบใหม่</div></div></label>
+        </div>
+        <div id="import-preview" style="display:none;margin-top:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--sp-navy);margin-bottom:6px" id="prev-title">Preview</div>
+          <div style="overflow-x:auto"><table class="prev-tbl" id="prev-tbl"><thead></thead><tbody></tbody></table></div>
+          <div style="font-size:11px;color:var(--sp-dgray);margin-top:8px" id="prev-stat"></div>
+        </div>
+      </div>
+      <div class="sp-modal-foot">
+        <button type="button" class="sp-btn sp-btn-ghost" id="sp-import-cancel">ยกเลิก</button>
+        <button type="button" class="sp-btn sp-btn-blue" id="do-import" style="display:none">✓ Import</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="sp-toast-wrap" id="sp-toasts"></div>
+
+  {{ parts_data|json_script:"sp-parts-data" }}
+  {{ txlog_data|json_script:"sp-txlog-data" }}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="{% static 'js/spare_parts.js' %}?v={% now 'U' %}" defer></script>
+{% endblock %}

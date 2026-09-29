@@ -1,0 +1,22 @@
+<div class="calc-grid">
+  <div>
+    <div class="form-group">
+      <label class="form-label">ประเภทหน่วย</label>
+      <select class="form-input" id="unit-category">
+        <option value="length">ความยาว (Length)</option>
+        <option value="weight">น้ำหนัก (Weight)</option>
+        <option value="volume">ปริมาตร (Volume)</option>
+        <option value="area">พื้นที่ (Area)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ค่า</label>
+      <input class="form-input" type="number" id="unit-value" value="1" step="any">
+    </div>
+    <div class="form-group">
+      <label class="form-label">หน่วยตั้งต้น</label>
+      <select class="form-input" id="unit-from"></select>
+    </div>
+  </div>
+  <div class="unit-result-list" id="unit-result"></div>
+</div>

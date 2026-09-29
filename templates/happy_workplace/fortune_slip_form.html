@@ -1,0 +1,36 @@
+{% extends "base/base.html" %}
+{% block title %}อัปโหลดคำทำนายเซียมซี — {{ APP_DISPLAY_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 5-5 4 4"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">อัปโหลดคำทำนายเซียมซี</h1>
+      <p class="page-desc">เลือกภาพใบเซียมซีได้หลายไฟล์พร้อมกัน (สูงสุด {{ total }} ใบ) ระบบอ่านเลขที่ใบจากตัวเลขท้ายชื่อไฟล์ เช่น <code>p-1.jpg</code>, <code>2.png</code>, <code>ใบที่ 28.jpg</code> — อัปโหลดเลขเดิมซ้ำจะแทนที่ภาพเดิม</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-panel">
+  <p style="margin:0 0 18px;font-size:13.5px;color:var(--muted);">
+    อัปโหลดแล้ว <strong>{{ uploaded_count }}/{{ total }}</strong> ใบ
+    {% if missing_numbers %}· ยังขาดเลขที่: {{ missing_numbers|join:", " }}{% endif %}
+  </p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-group">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-app">อัปโหลด</button>
+      <a class="btn btn-ghost btn-app" href="{% url 'happy_workplace:manage' %}">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

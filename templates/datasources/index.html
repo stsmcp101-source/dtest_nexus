@@ -1,0 +1,254 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Database — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">Database</h1>
+      <p class="page-desc">สำรวจข้อมูลแบบอ่านอย่างเดียวจากฐานข้อมูล{% if can_manage_connections %} และจัดการการเชื่อมต่อ SQL Server ภายนอกที่ใช้{% endif %}</p>
+    </div>
+  </div>
+</div>
+
+<div class="content-card">
+  <div class="calc-tabs">
+    <button type="button" class="calc-tab" data-tab="explorer">Data Explorer</button>
+    {% if can_manage_connections %}
+    <button type="button" class="calc-tab" data-tab="connections">Database Connections</button>
+    <button type="button" class="calc-tab" data-tab="settings">ตั้งค่าฐานข้อมูลหลัก</button>
+    {% endif %}
+  </div>
+
+  <div class="calc-panel" data-panel="explorer">
+    <div class="content-card" style="margin-bottom:20px;">
+      <div class="calc-inline-row" style="align-items:flex-end;flex-wrap:wrap;gap:16px;">
+        <div class="form-group" style="flex:1;min-width:220px;">
+          <label class="form-label">Data Source</label>
+          <select class="form-input" id="ds-source">
+            <option value="sqlite">SQLite (ฐานข้อมูลหลักของระบบ)</option>
+            {% for conn in explorer_connections %}
+              <option value="{{ conn.pk }}">{{ conn.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;min-width:220px;">
+          <label class="form-label">Table</label>
+          <select class="form-input" id="ds-table" disabled>
+            <option value="">กำลังโหลดรายชื่อตาราง...</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:none;">
+          <button type="button" class="btn btn-app btn-primary" id="ds-load-btn" disabled>Load Data</button>
+        </div>
+      </div>
+      <div id="ds-message" style="font-size:13px;color:var(--red-600);"></div>
+    </div>
+    <div id="ds-result-area"></div>
+  </div>
+
+  {% if can_manage_connections %}
+  <div class="calc-panel" data-panel="connections">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <p style="font-size:13px;color:var(--muted);margin:0;">จัดการการเชื่อมต่อ SQL Server ภายนอกที่ Data Explorer ใช้อ่านข้อมูล — ฐานข้อมูลหลักของระบบยังคงเป็น SQLite เหมือนเดิม</p>
+      <a href="{% url 'datasources:connection_create' %}" class="btn btn-primary btn-app" style="flex:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+        เพิ่มการเชื่อมต่อ
+      </a>
+    </div>
+
+    <div class="main-panel">
+      <div class="table-scroll-x">
+        <table class="doc-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Server</th>
+              <th>Database</th>
+              <th>สถานะล่าสุด</th>
+              <th>Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for conn in all_connections %}
+            <tr>
+              <td><span class="file-name-text">{{ conn.name }}</span></td>
+              <td class="mono" style="font-size:13px;">{{ conn.server }}{% if conn.port %}:{{ conn.port }}{% endif %}</td>
+              <td class="mono" style="font-size:13px;">{{ conn.database_name }}</td>
+              <td>
+                {% if conn.last_test_ok is None %}
+                  <span class="tag tag-mass">ยังไม่ทดสอบ</span>
+                {% elif conn.last_test_ok %}
+                  <span class="tag tag-active">เชื่อมต่อสำเร็จ</span>
+                {% else %}
+                  <span class="tag tag-archived">เชื่อมต่อไม่สำเร็จ</span>
+                {% endif %}
+              </td>
+              <td>{% if conn.is_active %}<span class="tag tag-active">Active</span>{% else %}<span class="tag tag-pending">Inactive</span>{% endif %}</td>
+              <td class="actions-col">
+                <div class="row-actions">
+                  <a class="btn-edit" href="{% url 'datasources:connection_edit' conn.pk %}">แก้ไข</a>
+                  <a class="btn-delete" href="{% url 'datasources:connection_delete' conn.pk %}">ลบ</a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="table-empty">ยังไม่มีการเชื่อมต่อฐานข้อมูล — กด "เพิ่มการเชื่อมต่อ" เพื่อเริ่มต้น</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-panel" data-panel="settings">
+    <div class="tool-op-panel" style="margin-bottom:20px;">
+      <h3>สถานะปัจจุบัน</h3>
+      <p class="op-desc">ฐานข้อมูลหลักที่ระบบกำลังใช้งานอยู่จริงตอนนี้</p>
+      <div class="unit-result-list">
+        <div class="unit-result-row"><span class="u-lbl">ประเภท</span><span class="u-val">{{ current_db.engine_label }}</span></div>
+        <div class="unit-result-row"><span class="u-lbl">ปลายทาง</span><span class="u-val">{{ current_db.target }}</span></div>
+      </div>
+    </div>
+
+    <div class="tool-op-panel" style="margin-bottom:20px;border-color:#f0dcb3;background:var(--amber-100);">
+      <h3 style="color:var(--amber-600);">⚠ โปรดอ่านก่อนบันทึก</h3>
+      <p class="op-desc" style="color:var(--navy-700);">
+        การบันทึกด้านล่าง<strong>ยังไม่</strong>เปลี่ยนฐานข้อมูลที่ใช้งานอยู่ทันที — มีผลก็ต่อเมื่อรีสตาร์ทระบบเท่านั้น และ<strong>ไม่ได้ย้ายข้อมูลเดิมให้อัตโนมัติ</strong>
+        ก่อนรีสตาร์ทจริง ต้อง: 1) รัน <span class="mono">migrate</span> บนฐานข้อมูลปลายทางให้มีโครงสร้างตารางครบก่อน 2) ย้าย/คัดลอกข้อมูลเดิมไปเองด้วยเครื่องมือที่เหมาะสม 3) จึงค่อยรีสตาร์ทระบบ
+      </p>
+    </div>
+
+    <form method="post" action="{% url 'datasources:primary_database_settings_update' %}" id="primaryDbForm">
+      {% csrf_token %}
+      <input type="hidden" name="tab" value="settings">
+      <div class="form-group">
+        <label class="form-label">{{ primary_db_form.engine.label }}</label>
+        {{ primary_db_form.engine }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">{{ primary_db_form.name.label }}</label>
+        {{ primary_db_form.name }}
+        {% if primary_db_form.name.errors %}<div class="form-error">{{ primary_db_form.name.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div id="primaryDbMssqlFields">
+        <div class="form-group">
+          <label class="form-label">{{ primary_db_form.host.label }}</label>
+          {{ primary_db_form.host }}
+          {% if primary_db_form.host.errors %}<div class="form-error">{{ primary_db_form.host.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ primary_db_form.port.label }}</label>
+          {{ primary_db_form.port }}
+          {% if primary_db_form.port.errors %}<div class="form-error">{{ primary_db_form.port.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ primary_db_form.user.label }}</label>
+          {{ primary_db_form.user }}
+          {% if primary_db_form.user.errors %}<div class="form-error">{{ primary_db_form.user.errors|join:", " }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ primary_db_form.password.label }}</label>
+          {{ primary_db_form.password }}
+          <p class="form-help">{{ primary_db_form.password.help_text }}</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ primary_db_form.odbc_driver.label }}</label>
+          {{ primary_db_form.odbc_driver }}
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:12px;">
+          <button type="button" class="btn btn-app btn-ghost" id="primaryDbTestBtn">ทดสอบการเชื่อมต่อ</button>
+          <span id="primaryDbTestResult" style="font-size:12.5px;"></span>
+        </div>
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;">
+        {{ primary_db_form.confirm }}
+        <label class="form-label" for="{{ primary_db_form.confirm.id_for_label }}" style="margin:0;font-weight:500;">{{ primary_db_form.confirm.label }}</label>
+      </div>
+      {% if primary_db_form.confirm.errors %}<div class="form-error">{{ primary_db_form.confirm.errors|join:", " }}</div>{% endif %}
+
+      <button type="submit" class="btn btn-app btn-primary">บันทึกการตั้งค่า</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var tabs = document.querySelectorAll(".calc-tab");
+  var panels = document.querySelectorAll(".calc-panel");
+  if (!tabs.length) return;
+  function activate(name) {
+    tabs.forEach(function (t) { t.classList.toggle("active", t.dataset.tab === name); });
+    panels.forEach(function (p) { p.classList.toggle("active", p.dataset.panel === name); });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      activate(t.dataset.tab);
+      var url = new URL(window.location);
+      url.searchParams.set("tab", t.dataset.tab);
+      window.history.replaceState({}, "", url);
+    });
+  });
+  var names = Array.prototype.map.call(tabs, function (t) { return t.dataset.tab; });
+  var requested = new URLSearchParams(window.location.search).get("tab");
+  activate(names.indexOf(requested) !== -1 ? requested : "{{ initial_tab }}");
+})();
+</script>
+{% if can_manage_connections %}
+<script>
+(function () {
+  var engineSelect = document.getElementById("id_engine");
+  var mssqlFields = document.getElementById("primaryDbMssqlFields");
+  if (!engineSelect || !mssqlFields) return;
+
+  function syncFields() {
+    mssqlFields.style.display = engineSelect.value === "mssql" ? "" : "none";
+  }
+  engineSelect.addEventListener("change", syncFields);
+  syncFields();
+
+  var testBtn = document.getElementById("primaryDbTestBtn");
+  var testResult = document.getElementById("primaryDbTestResult");
+  var csrfInput = document.querySelector('#primaryDbForm [name=csrfmiddlewaretoken]');
+  testBtn.addEventListener("click", function () {
+    testBtn.disabled = true;
+    testResult.textContent = "กำลังทดสอบ...";
+    testResult.style.color = "var(--muted)";
+    var fd = new FormData();
+    fd.append("host", document.getElementById("id_host").value);
+    fd.append("port", document.getElementById("id_port").value);
+    fd.append("name", document.getElementById("id_name").value);
+    fd.append("user", document.getElementById("id_user").value);
+    fd.append("password", document.getElementById("id_password").value);
+    fd.append("odbc_driver", document.getElementById("id_odbc_driver").value);
+    fetch("{% url 'datasources:primary_database_test' %}", {
+      method: "POST", body: fd, headers: { "X-CSRFToken": csrfInput.value },
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        testResult.textContent = data.message;
+        testResult.style.color = data.ok ? "var(--green-600)" : "var(--red-600)";
+      })
+      .catch(function () {
+        testResult.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
+        testResult.style.color = "var(--red-600)";
+      })
+      .then(function () { testBtn.disabled = false; });
+  });
+})();
+</script>
+{% endif %}
+<script src="{% static 'js/datasources_browse.js' %}?v={% now 'U' %}"
+        data-tables-url="{% url 'datasources:browse_tables' %}"
+        data-data-url="{% url 'datasources:browse_data' %}"></script>
+{% endblock %}

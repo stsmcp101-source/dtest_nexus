@@ -1,0 +1,497 @@
+{% load static tool_icons %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SATURATION TEMP — {{ APP_DISPLAY_NAME }}</title>
+  <!-- Compiled locally from the supplied design. -->
+  <link rel="stylesheet" href="{% static 'css/saturation_temp_utilities.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-mono-data {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .excel-header {
+      background-color: #dbe7d5;
+      border: 1.5px solid #0f172a;
+    }
+    /* Fixed uniform badge dimensions */
+    .kpi-badge {
+      width: 5.5rem;
+      height: 2.5rem;
+      border: 2px solid #0f172a;
+      box-shadow: 2px 2px 0px rgba(0,0,0,0.25);
+      border-radius: 0.375rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+    }
+    /* 10-Cell thermocouple inputs */
+    .coil-input {
+      background-color: #d1fae5;
+      border: 1.5px solid #6ee7b7;
+      text-align: center;
+      font-weight: 700;
+      color: #064e3b;
+      font-size: 0.8rem;
+      transition: all 0.15s ease-in-out;
+      outline: none;
+      min-width: 0;
+      height: 2.25rem;
+    }
+    .coil-input:focus {
+      background-color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    }
+    /* 11th cell: Average readout */
+    .coil-ave-box {
+      background-color: #ffffff;
+      border: 1.5px solid #0f172a;
+      font-weight: 800;
+      text-align: center;
+      color: #0f172a;
+      font-size: 0.85rem;
+      min-width: 0;
+      height: 2.25rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+  </style>
+<link rel="stylesheet" href="{% static 'css/ph_diagram.css' %}?v=9">
+</head>
+<body data-ph-url="{% url 'utilities:ph_diagram_data' %}" class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-12">
+
+  <main class="sat-main max-w-7xl mx-auto px-2 sm:px-4 py-4 space-y-5">
+    <nav class="sat-breadcrumb" aria-label="Breadcrumb">
+      <a href="{% url 'dashboard:index' %}">Home</a>
+    </nav>
+
+    <div class="sat-tool-head">
+      <div class="sat-tool-head-left">
+        {% tool_logo_url "saturation_temp" as logo_url %}
+        <div class="sat-tool-icon{% if logo_url %} has-image{% endif %}">
+          {% if logo_url %}
+            <img src="{{ logo_url }}" alt="">
+          {% else %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 14.5V5a2 2 0 10-4 0v9.5a4 4 0 104 0z"/><path d="M16 5h5M16 9h3M16 13h5"/></svg>
+          {% endif %}
+        </div>
+        <div>
+          <h1 class="sat-tool-title">SATURATION TEMP</h1>
+          <p class="sat-tool-description">Calculate saturation temperature, subcooling, superheat, and analyze the P-h refrigeration cycle.</p>
+        </div>
+      </div>
+      <a href="{% url 'utilities:index' %}" class="sat-back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        Back to Tools
+      </a>
+    </div>
+
+    <div class="sat-page-controls">
+      <div class="sat-mode-tabs" aria-label="Select calculation mode">
+        <button id="tabNotGauge" type="button" onclick="switchGaugeType('NOT_GAUGE')" class="sat-mode-tab is-active">1. Not Gauge</button>
+        <button id="tabAddGauge" type="button" onclick="switchGaugeType('ADD_GAUGE')" class="sat-mode-tab">2. Add Gauge</button>
+      </div>
+      <button type="button" class="sat-export-button" onclick="exportSaturationReport()" title="Open PDF export preview">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+        Export PDF
+      </button>
+      <button type="button" class="sat-clear-button" onclick="clearSaturationValues()" title="Clear all entered values">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <!-- Top Excel-like Saturation Temp Header Panel -->
+    <section class="excel-header rounded-lg shadow-sm overflow-hidden">
+      <div class="text-center py-1.5 bg-[#b8d6b8] border-b-2 border-slate-800">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-wider uppercase">Saturation Temp</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+        
+        <!-- Left Side: Refrigerant Selection + Mode Switch + PT Inputs -->
+        <div class="lg:col-span-8 p-3 sm:p-4 flex flex-col justify-between space-y-4">
+          
+          <div class="flex flex-wrap items-center gap-4">
+            <!-- Refrigerant Dropdown -->
+            <div class="flex items-center border-2 border-slate-800 bg-white rounded overflow-hidden shadow-sm">
+              <span class="bg-[#e4ede4] px-3 py-1 text-xs sm:text-sm font-black border-r-2 border-slate-800 text-slate-900">REFRIGERANT</span>
+              <select id="refrigerantSelect" onchange="onRefrigerantChange()" class="px-3 py-1 font-bold text-blue-700 text-sm outline-none cursor-pointer">
+                <option value="R32" selected>R32</option>
+                <option value="R410A">R410A</option>
+                <option value="R454B">R454B</option>
+                <option value="R290">R290</option>
+              </select>
+            </div>
+
+            <!-- Operating Mode Switch Button (COOLING vs HEATING) -->
+            <div class="flex items-center space-x-2">
+              <span class="text-xs sm:text-sm font-extrabold text-slate-900">Select =&gt; Mode:</span>
+              <button id="operatingModeBtn" onclick="toggleOperatingMode()" class="px-4 py-1 font-black text-xs sm:text-sm rounded border-2 border-slate-800 shadow-sm transition-all duration-150 uppercase bg-blue-100 text-blue-700 hover:bg-blue-200">
+                COOLING
+              </button>
+            </div>
+            
+            <div class="text-[11px] font-semibold text-slate-700 bg-white/70 px-2 py-1 rounded border border-slate-400">
+              Gauge: MPa(g) • P(abs) = P(g) + 0.101325 MPa
+            </div>
+          </div>
+
+          <!-- NOT GAUGE SECTION: Auto-populated Temperature (2 Decimal Places) & Calculated Pressure -->
+          <div id="notGaugeTopSection" class="flex flex-wrap items-center gap-8 pt-1">
+            <div class="space-y-2">
+              <div class="text-xs sm:text-sm font-extrabold text-blue-700 uppercase">Temperature (&deg;C)</div>
+              
+              <!-- Hi Temp (Auto from Coil Center, formatted to 2 decimals) -->
+              <div>
+                <input type="number" step="0.01" id="ngHiTemp" value="23.10" readonly class="w-28 px-2 py-1.5 bg-white border-2 border-slate-800 text-center font-extrabold text-slate-900 rounded font-mono-data text-base cursor-default shadow-sm" />
+              </div>
+
+              <!-- Low Temp (Auto from Coil Center, formatted to 2 decimals) -->
+              <div>
+                <input type="number" step="0.01" id="ngLowTemp" value="5.20" readonly class="w-28 px-2 py-1.5 bg-white border-2 border-slate-800 text-center font-extrabold text-slate-900 rounded font-mono-data text-base cursor-default shadow-sm" />
+              </div>
+            </div>
+
+            <!-- Pressure Gauge (Mpa) - Automatically Calculated -->
+            <div class="space-y-2">
+              <div class="text-xs sm:text-sm font-extrabold text-red-700 uppercase">Pressure gauge (Mpa)</div>
+              <div class="flex items-center space-x-2">
+                <input type="number" step="0.001" id="ngHiPress" value="1.543" readonly class="w-28 px-2 py-1.5 bg-white border-2 border-slate-800 text-center font-extrabold text-slate-900 rounded font-mono-data text-base cursor-default shadow-sm" />
+                <span class="text-xs font-black text-slate-800">HIGH PRESSURE:</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="number" step="0.001" id="ngLowPress" value="0.825" readonly class="w-28 px-2 py-1.5 bg-white border-2 border-slate-800 text-center font-extrabold text-slate-900 rounded font-mono-data text-base cursor-default shadow-sm" />
+                <span class="text-xs font-black text-slate-800">LOW PRESSURE:</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADD GAUGE SECTION: Pressure Gauge Inputs -> Calculated Saturation Temps -->
+          <div id="addGaugeTopSection" class="hidden add-gauge-compact pt-1">
+            <div class="add-gauge-column">
+              <div class="add-gauge-title add-gauge-title--temperature">Temperature (&deg;C)</div>
+              <output class="add-gauge-box add-gauge-output font-mono-data" id="agHiTemp">42.223</output>
+              <output class="add-gauge-box add-gauge-output font-mono-data" id="agLowTemp">17.696</output>
+            </div>
+
+            <div class="add-gauge-column add-gauge-column--pressure">
+              <div class="add-gauge-title add-gauge-title--pressure">Pressure Gauge (MPa)</div>
+              <label class="add-gauge-row" for="agHiPress">
+                <input type="number" step="0.001" id="agHiPress" value="2.511" oninput="calculateAddGaugePT()" class="add-gauge-box font-mono-data" />
+                <span>HIGH PRESSURE:</span>
+              </label>
+              <label class="add-gauge-row" for="agLowPress">
+                <input type="number" step="0.001" id="agLowPress" value="1.283" oninput="calculateAddGaugePT()" class="add-gauge-box font-mono-data" />
+                <span>LOW PRESSURE:</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Side: Big REFRIGERANT Arrow Badge -->
+        <div class="lg:col-span-4 bg-[#f8efd5] border-t-2 lg:border-t-0 lg:border-l-2 border-slate-800 p-4 flex items-center justify-center">
+          <div class="flex items-center space-x-3 text-center">
+            <span class="text-lg sm:text-xl font-bold tracking-wider text-slate-800">REFRIGERANT</span>
+            <span class="text-2xl font-black text-red-600">&#10132;</span>
+            <span id="bigRefrigBadge" class="text-5xl sm:text-6xl font-black tracking-tight text-slate-950 font-mono-data">R32</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================================= -->
+    <!-- VIEW CONTAINER: ONLY 1 VIEW IS DISPLAYED AT A TIME (COOLING VIEW OR HEATING VIEW) -->
+    <!-- ========================================================================================= -->
+
+    <!-- ======================= 1. COOLING MODE VIEW (Side-by-Side) ======================= -->
+    <div id="coolingViewContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      
+      <!-- LEFT: COOLING MODE TABLE CARD -->
+      <section class="bg-white border-2 border-blue-600 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
+        <div class="p-3 pb-2 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
+          <h3 class="text-lg sm:text-xl font-black text-blue-700 uppercase tracking-wide">COOLING MODE</h3>
+          <span class="text-xs font-semibold px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded-full">Liquid: Outdoor / Evap: Indoor</span>
+        </div>
+
+        <div class="p-4 space-y-4 text-xs sm:text-sm flex-1 flex flex-col justify-between">
+          <!-- Suction / Discharge & Badges -->
+          <div class="grid grid-cols-12 gap-3 items-center">
+            <div class="col-span-6 space-y-3">
+              <div class="flex items-center space-x-2">
+                <label class="w-24 font-bold text-slate-800">SUCTION</label>
+                <input type="number" step="0.1" id="c_suction" value="11.5" oninput="computeCalculations()" class="w-20 px-2 py-1 bg-cyan-50 border border-slate-700 font-bold text-center rounded font-mono-data" />
+                <span class="text-xs text-slate-600">&deg;C</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <label class="w-24 font-bold text-slate-800">DISCHARGE</label>
+                <input type="number" step="0.1" id="c_discharge" value="38.6" oninput="computeCalculations()" class="w-20 px-2 py-1 bg-cyan-50 border border-slate-700 font-bold text-center rounded font-mono-data" />
+                <span class="text-xs text-slate-600">&deg;C</span>
+              </div>
+            </div>
+
+            <!-- KPI Badges (SC, SH, DSH) - Enlarged, uniform, vertically centered -->
+            <div class="col-span-6 space-y-2.5 pl-3 border-l border-slate-200">
+              <div class="flex items-center space-x-2.5">
+                <span class="font-extrabold text-slate-900 text-sm w-12">SC :</span>
+                <div class="kpi-badge text-blue-700 font-mono-data text-lg font-black" id="c_sc_badge">-2.1</div>
+                <span class="text-xs font-semibold text-slate-600">deg.</span>
+              </div>
+              <div class="flex items-center space-x-2.5">
+                <span class="font-extrabold text-slate-900 text-sm w-12">SH :</span>
+                <div class="kpi-badge text-blue-700 font-mono-data text-lg font-black" id="c_sh_badge">6.3</div>
+                <span class="text-xs font-semibold text-slate-600">deg.</span>
+              </div>
+              <div class="flex items-center space-x-2.5">
+                <span class="font-extrabold text-slate-900 text-sm w-12">DSH :</span>
+                <div class="kpi-badge text-blue-700 font-mono-data text-lg font-black" id="c_dsh_badge">15.6</div>
+                <span class="text-xs font-semibold text-slate-600">deg.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-cell Inputs for Coil Temperatures (10 Cells + 1 Ave Box) -->
+          <div class="space-y-3 pt-2 border-t border-slate-200">
+            <!-- Row 1: Indoor Coil Center (Displayed in Not Gauge, provides Low Temp in Cooling) -->
+            <div id="c_row_indoor_center" class="space-y-1">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-800 tracking-wide">INDOOR COIL CENTER <span class="text-[10px] text-blue-600 font-semibold">(Low Sat Temp)</span></span>
+                <span class="text-[11px] font-semibold text-slate-500">Ave</span>
+              </div>
+              <div class="grid grid-cols-11 gap-1 items-center" id="c_icc_container"></div>
+            </div>
+
+            <!-- Row 2: Outdoor Coil Center (Displayed in Not Gauge, provides Hi Temp in Cooling) -->
+            <div id="c_row_outdoor_center" class="space-y-1">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-800 tracking-wide">OUTDOOR COIL CENTER <span class="text-[10px] text-red-600 font-semibold">(Hi Sat Temp)</span></span>
+                <span class="text-[11px] font-semibold text-slate-500">Ave</span>
+              </div>
+              <div class="grid grid-cols-11 gap-1 items-center" id="c_occ_container"></div>
+            </div>
+
+            <!-- Row 3: Outdoor Coil Outlet (Both modes) -->
+            <div class="space-y-1">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-800 tracking-wide">OUTDOOR COIL OUTLET</span>
+                <span class="text-[11px] font-semibold text-slate-500">Ave</span>
+              </div>
+              <div class="grid grid-cols-11 gap-1 items-center" id="c_oco_container"></div>
+            </div>
+          </div>
+
+          <!-- Formula Box for Cooling -->
+          <div class="bg-[#ffffea] border-2 border-slate-700 p-3 rounded space-y-1 text-xs text-slate-900 mt-2">
+            <div class="font-black text-blue-700 mb-1">Calculation Formula (COOLING)</div>
+            <div id="c_formula_sc" class="flex items-baseline">
+              <span class="font-bold w-12 text-slate-800">SC :</span>
+              <span class="text-slate-700">OUTDOOR COIL CENTER(AVE) - OUTDOOR COIL OUTLET(AVE)</span>
+            </div>
+            <div id="c_formula_sh" class="flex items-baseline">
+              <span class="font-bold w-12 text-slate-800">SH :</span>
+              <span class="text-slate-700">SUCTION - INDOOR COIL CENTER (AVE)</span>
+            </div>
+            <div id="c_formula_dsh" class="flex items-baseline">
+              <span class="font-bold w-12 text-slate-800">DSH :</span>
+              <span class="text-slate-700">DISCHARGE - OUTDOOR COIL CENTER(AVE)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: COOLING P-h DIAGRAM CARD -->
+      <section class="bg-white border-2 border-blue-600 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
+        <div class="p-3 pb-2 border-b border-blue-100 bg-blue-50/70 flex items-center justify-between">
+          <h3 class="text-sm sm:text-base font-extrabold text-blue-900 tracking-wide uppercase">COOLING CYCLE (P-h)</h3>
+          <div class="text-xs font-mono-data font-bold text-blue-900">
+            SC: <span id="ph_c_sc">-2.1</span> | SH: <span id="ph_c_sh">6.3</span> | DSH: <span id="ph_c_dsh">15.6</span>
+          </div>
+        </div>
+
+        <div class="p-2 sm:p-4 flex items-center justify-center flex-1 bg-white">
+          <div class="ph-panel" data-mode="cooling">
+  <div class="ph-status" role="status">Calculating refrigerant properties…</div>
+  <svg id="svgCooling" viewBox="0 0 720 460" role="img" aria-label="Pressure–enthalpy diagram"></svg>
+  <div class="ph-legend"><span style="color:#e05252">● 2 → 3 Condensation</span><span style="color:#d79a27">● 3 → 4 Expansion</span><span style="color:#2788cd">● 4 → 1 Evaporation</span><span style="color:#885bc8">● 1 → 2 Compression</span></div>
+  <div class="ph-saturation ph-note"></div>
+  <div class="ph-states"></div>
+  <p class="ph-note">P is absolute pressure • h is specific enthalpy • Line 1–2 connects measured points; it is not the actual compression path • Pressure drops are excluded</p>
+</div>
+        </div>
+      </section>
+
+    </div>
+
+
+    <!-- ======================= 2. HEATING MODE VIEW (Side-by-Side) ======================= -->
+    <div id="heatingViewContainer" class="hidden grid-cols-1 lg:grid-cols-2 gap-5">
+      
+      <!-- LEFT: HEATING MODE TABLE CARD -->
+      <section class="bg-white border-2 border-red-600 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
+        <div class="p-3 pb-2 border-b border-red-100 bg-red-50 flex items-center justify-between">
+          <h3 class="text-lg sm:text-xl font-black text-red-600 uppercase tracking-wide">HEATING MODE</h3>
+          <span class="text-xs font-semibold px-2.5 py-0.5 bg-red-100 text-red-800 border border-red-200 rounded-full">Liquid: Indoor / Evap: Outdoor</span>
+        </div>
+
+        <div class="p-4 space-y-4 text-xs sm:text-sm flex-1 flex flex-col justify-between">
+          <!-- Suction / Discharge & Badges -->
+          <div class="grid grid-cols-12 gap-3 items-center">
+            <div class="col-span-6 space-y-3">
+              <div class="flex items-center space-x-2">
+                <label class="w-24 font-bold text-slate-800">SUCTION</label>
+                <input type="number" step="0.1" id="h_suction" value="19.3" oninput="computeCalculations()" class="w-20 px-2 py-1 bg-cyan-50 border border-slate-700 font-bold text-center rounded font-mono-data" />
+                <span class="text-xs text-slate-600">&deg;C</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <label class="w-24 font-bold text-slate-800">DISCHARGE</label>
+                <input type="number" step="0.1" id="h_discharge" value="58.7" oninput="computeCalculations()" class="w-20 px-2 py-1 bg-cyan-50 border border-slate-700 font-bold text-center rounded font-mono-data" />
+                <span class="text-xs text-slate-600">&deg;C</span>
+              </div>
+            </div>
+
+            <!-- KPI Badges (SC, SH, DSH) - Enlarged, uniform, vertically centered -->
+            <div class="col-span-6 space-y-2.5 pl-3 border-l border-slate-200">
+              <div class="flex items-center space-x-2.5">
+                <span class="font-extrabold text-slate-900 text-sm w-12">SC :</span>
+                <div class="kpi-badge text-red-600 font-mono-data text-lg font-black" id="h_sc_badge">-0.9</div>
+                <span class="text-xs font-semibold text-slate-600">deg.</span>
+              </div>
+              <div class="flex items-center space-x-2.5">
+                <span class="font-extrabold text-slate-900 text-sm w-12">SH :</span>
+                <div class="kpi-badge text-red-600 font-mono-data text-lg font-black" id="h_sh_badge">-0.2</div>
+                <span class="text-xs font-semibold text-slate-600">deg.</span>
+              </div>
+              <div class="flex items-center space-x-2.5">
+                <span class="font-extrabold text-slate-900 text-sm w-12">DSH :</span>
+                <div class="kpi-badge text-red-600 font-mono-data text-lg font-black" id="h_dsh_badge">10.4</div>
+                <span class="text-xs font-semibold text-slate-600">deg.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-cell Inputs for Coil Temperatures (10 Cells + 1 Ave Box) -->
+          <div class="space-y-3 pt-2 border-t border-slate-200">
+            <!-- Row 1: Outdoor Coil Center (Displayed in Not Gauge, provides Low Temp in Heating) -->
+            <div id="h_row_outdoor_center" class="space-y-1">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-800 tracking-wide">OUTDOOR COIL CENTER <span class="text-[10px] text-blue-600 font-semibold">(Low Sat Temp)</span></span>
+                <span class="text-[11px] font-semibold text-slate-500">Ave</span>
+              </div>
+              <div class="grid grid-cols-11 gap-1 items-center" id="h_occ_container"></div>
+            </div>
+
+            <!-- Row 2: Indoor Coil Center (Displayed in Not Gauge, provides Hi Temp in Heating) -->
+            <div id="h_row_indoor_center" class="space-y-1">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-800 tracking-wide">INDOOR COIL CENTER <span class="text-[10px] text-red-600 font-semibold">(Hi Sat Temp)</span></span>
+                <span class="text-[11px] font-semibold text-slate-500">Ave</span>
+              </div>
+              <div class="grid grid-cols-11 gap-1 items-center" id="h_icc_container"></div>
+            </div>
+
+            <!-- Row 3: Indoor Coil Outlet (Both modes) -->
+            <div class="space-y-1">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-800 tracking-wide">INDOOR COIL OUTLET</span>
+                <span class="text-[11px] font-semibold text-slate-500">Ave</span>
+              </div>
+              <div class="grid grid-cols-11 gap-1 items-center" id="h_ico_container"></div>
+            </div>
+          </div>
+
+          <!-- Formula Box for Heating -->
+          <div class="bg-[#ffffea] border-2 border-slate-700 p-3 rounded space-y-1 text-xs text-slate-900 mt-2">
+            <div class="font-black text-red-600 mb-1">Calculation Formula (HEATING)</div>
+            <div id="h_formula_sc" class="flex items-baseline">
+              <span class="font-bold w-12 text-slate-800">SC :</span>
+              <span class="text-slate-700">INDOOR COIL CENTER(AVE) - INDOOR COIL OUTLET(AVE)</span>
+            </div>
+            <div id="h_formula_sh" class="flex items-baseline">
+              <span class="font-bold w-12 text-slate-800">SH :</span>
+              <span class="text-slate-700">SUCTION - OUTDOOR COIL CENTER (AVE)</span>
+            </div>
+            <div id="h_formula_dsh" class="flex items-baseline">
+              <span class="font-bold w-12 text-slate-800">DSH :</span>
+              <span class="text-slate-700">DISCHARGE - INDOOR COIL CENTER(AVE)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: HEATING P-h DIAGRAM CARD -->
+      <section class="bg-white border-2 border-red-600 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
+        <div class="p-3 pb-2 border-b border-red-100 bg-red-50/70 flex items-center justify-between">
+          <h3 class="text-sm sm:text-base font-extrabold text-red-900 tracking-wide uppercase">HEATING CYCLE (P-h)</h3>
+          <div class="text-xs font-mono-data font-bold text-red-900">
+            SC: <span id="ph_h_sc">-0.9</span> | SH: <span id="ph_h_sh">-0.2</span> | DSH: <span id="ph_h_dsh">10.4</span>
+          </div>
+        </div>
+
+        <div class="p-2 sm:p-4 flex items-center justify-center flex-1 bg-white">
+          <div class="ph-panel" data-mode="heating">
+  <div class="ph-status" role="status">Calculating refrigerant properties…</div>
+  <svg id="svgHeating" viewBox="0 0 720 460" role="img" aria-label="Pressure–enthalpy diagram"></svg>
+  <div class="ph-legend"><span style="color:#e05252">● 2 → 3 Condensation</span><span style="color:#d79a27">● 3 → 4 Expansion</span><span style="color:#2788cd">● 4 → 1 Evaporation</span><span style="color:#885bc8">● 1 → 2 Compression</span></div>
+  <div class="ph-saturation ph-note"></div>
+  <div class="ph-states"></div>
+  <p class="ph-note">P is absolute pressure • h is specific enthalpy • Line 1–2 connects measured points; it is not the actual compression path • Pressure drops are excluded</p>
+</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Status & Info footer -->
+    <div class="sat-info-footer bg-slate-200/80 border border-slate-300 rounded-lg p-3 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <span class="font-bold text-slate-900">Thermodynamics Logic:</span>
+        <span class="ml-1">Subcooling (SC) = T_sat(cond) - T_liquid_out | Superheat (SH) = T_suction - T_sat(evap) | Discharge Superheat (DSH) = T_discharge - T_sat(cond)</span>
+      </div>
+      <div class="text-slate-500 font-semibold">Properties: CoolProp HEOS • SC: bubble point / SH & DSH: dew point • R454B: mixture</div>
+    </div>
+
+  </main>
+
+  <div id="exportPreviewModal" class="sat-export-modal" hidden role="dialog" aria-modal="true" aria-labelledby="exportPreviewTitle">
+    <div class="sat-export-dialog">
+      <div class="sat-export-dialog-head">
+        <div>
+          <h2 id="exportPreviewTitle">Preview Before PDF Export</h2>
+          <p>Landscape A4 • Fit to one full page</p>
+        </div>
+        <div class="sat-export-dialog-actions">
+          <button type="button" class="sat-preview-cancel" onclick="closeSaturationExportPreview()">Cancel</button>
+          <button type="button" class="sat-preview-save" onclick="confirmSaturationExport()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+            Save as PDF
+          </button>
+        </div>
+      </div>
+      <div class="sat-export-preview-stage">
+        <div id="exportPreviewPage" class="sat-export-preview-page" aria-label="Landscape A4 report preview"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'js/ph_diagram.js' %}?v=4" defer></script>
+  <script src="{% static 'js/tools_saturation.js' %}?v=7" defer></script>
+</body>
+</html>

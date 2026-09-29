@@ -1,0 +1,614 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}วิเคราะห์เบอร์ — Happy Workplace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+<div class="pa-wrap">
+  <a class="hwp-back-link" href="{% url 'happy_workplace:index' %}">← กลับ Happy Workplace</a>
+
+  <div class="hwp-game-shell" id="paInputPanel">
+    <div class="hwp-game-panel">
+      <h1>วิเคราะห์เบอร์</h1>
+      <p class="sub">ใส่เบอร์โทรศัพท์ 10 หลัก ระบบจะ<strong>วิเคราะห์ครบทุกหลัก</strong> ดูเลขคู่ดี-เสียทั้ง 9 คู่ในเบอร์ ความหมายของแต่ละคู่ และคะแนนพลังงาน 6 ด้านเพื่อความบันเทิง</p>
+      <input type="tel" class="pa-input" id="paInput" maxlength="10" placeholder="0812345678" inputmode="numeric">
+      <div><button type="button" class="fs-shake-btn" id="paBtn">วิเคราะห์เบอร์</button></div>
+      <p class="pa-error" id="paError">กรุณากรอกตัวเลข 10 หลัก</p>
+      <p class="hwp-play-note" id="paPlayNote"></p>
+      <p class="hwp-disclaimer">เพื่อความบันเทิงเท่านั้น ไม่มีผลทางวิทยาศาสตร์รองรับ</p>
+
+      <div class="pa-compare-launch">
+        <button type="button" class="pa-link-btn" id="paCompareToggle">หรือเปรียบเทียบ 2 เบอร์ →</button>
+      </div>
+      <div class="pa-compare-form" id="paCompareForm" style="display:none;">
+        <div class="pa-compare-inputs">
+          <input type="tel" class="pa-input sm" id="paInputA" maxlength="10" placeholder="เบอร์ที่ 1" inputmode="numeric">
+          <input type="tel" class="pa-input sm" id="paInputB" maxlength="10" placeholder="เบอร์ที่ 2" inputmode="numeric">
+        </div>
+        <div><button type="button" class="fs-shake-btn" id="paCompareBtn">เปรียบเทียบเบอร์</button></div>
+        <p class="pa-error" id="paCompareError">กรุณากรอกตัวเลขให้ครบทั้ง 2 เบอร์ เบอร์ละ 10 หลัก</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pa-report" id="paReport">
+    <div class="pa-left">
+      <div class="pa-actions pa-actions-top">
+        <button type="button" class="fs-shake-btn" id="paAgainBtn">วิเคราะห์เบอร์อื่น</button>
+      </div>
+      <h2 class="pa-report-title">ผลวิเคราะห์ทำนายเบอร์</h2>
+      <div class="pa-bignum" id="paBigNum"></div>
+      <p class="pa-skip-note" id="paSkipNote"></p>
+      <div class="pa-seq" id="paSeq"></div>
+      <div class="pa-divider"></div>
+
+      <div class="pa-sum" id="paSum">
+        <div class="pa-sum-circle" id="paSumCircle"><span>ผลรวม</span><b id="paSumNum"></b></div>
+        <div class="pa-grade-row">
+          <span class="pa-grade-label">เกรดผลรวม</span>
+          <div class="pa-grade-bar" id="paGradeBar">
+            <div class="pa-grade-cover" id="paGradeCover"></div>
+            <div class="pa-grade-dots" id="paGradeDots"></div>
+            <div class="pa-grade-marker" id="paGradeMarker"></div>
+          </div>
+        </div>
+        <p class="pa-sum-text" id="paSumText"></p>
+      </div>
+
+      <div class="pa-box good">
+        <span class="pa-box-tag">เลขดี</span>
+        <div class="pa-chips" id="paGoodChips"></div>
+      </div>
+      <div class="pa-box bad">
+        <span class="pa-box-tag">เลขเสีย</span>
+        <div class="pa-chips" id="paBadChips"></div>
+      </div>
+
+      <div class="pa-box mid">
+        <span class="pa-box-tag">เลขกลาง</span>
+        <div class="pa-chips" id="paMidChips"></div>
+      </div>
+
+      <div class="pa-verdict" id="paVerdict"><span class="pa-verdict-icn" id="paVerdictIcn"></span><span id="paVerdictText"></span></div>
+    </div>
+
+    <div class="pa-right" id="paMeters"></div>
+    <p class="pa-disclaimer-line">คลิกที่เลขคู่เพื่อดูความหมาย · เพื่อความบันเทิงเท่านั้น ไม่มีผลทางวิทยาศาสตร์รองรับ</p>
+  </div>
+
+  <div class="pa-explain" id="paExplain"></div>
+
+  <div class="pa-compare-report" id="paCompareReport">
+    <div class="pa-actions pa-actions-top">
+      <button type="button" class="fs-shake-btn" id="paCompareAgainBtn">เปรียบเทียบเบอร์อื่น</button>
+    </div>
+    <h2 class="pa-report-title pa-compare-title">เปรียบเทียบเบอร์</h2>
+    <p class="pa-compare-summary" id="paCompareSummary"></p>
+    <div class="pa-compare-grid" id="paCompareGrid"></div>
+    <p class="pa-disclaimer-line">เพื่อความบันเทิงเท่านั้น ไม่มีผลทางวิทยาศาสตร์รองรับ</p>
+  </div>
+
+</div>
+{{ play|json_script:"paPlayData" }}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/hwp_play.js' %}?v={% now 'U' %}"></script>
+<script>
+(function(){
+  var PLAY_URL = "{% url 'happy_workplace:play_start' 'phone_analysis' %}";
+  var CSRF = "{{ csrf_token }}";
+  var playState = JSON.parse(document.getElementById("paPlayData").textContent);
+  // pair -> ["g"ood | "b"ad | "n"eutral, effect on [การเงิน/การงาน, โชคลาภ, เสน่ห์/ความรัก, สุขภาพ, สติปัญญา, เซ้นส์], meaning]
+  // Good effects are 0..2 (green), bad -2..0 (red), neutral pairs lean at most +-2. All 100 pairs are covered.
+  var PAIRS = {
+    "14":["g",[2,1,0,1,1,0],"ผู้นำที่ลงมือทำจริงและอดทน สร้างความก้าวหน้าในหน้าที่การงานได้ต่อเนื่อง มีคนเชื่อถือและมอบหมายงานสำคัญให้"],
+    "15":["g",[1,1,0,0,2,1],"ช่างพูด ช่างเรียนรู้ เข้าใจคนได้เร็ว เหมาะกับงานสื่อสารและการเจรจา ความคิดริเริ่มมักได้รับการสนับสนุน"],
+    "16":["g",[1,1,2,0,0,1],"มีเสน่ห์อบอุ่น ผู้คนรักใคร่เอ็นดู ความรักมั่นคงและได้รับการดูแลจากคนรอบข้าง เหมาะกับงานบริการและงานที่ต้องเข้าถึงใจคน"],
+    "19":["g",[2,1,0,0,1,2],"มีความสามารถโดดเด่นและมีโชคช่วยในการทำสิ่งใหม่ๆ ใจกว้าง ผู้ใหญ่เมตตา งานที่ตั้งใจมักสำเร็จลุล่วง"],
+    "23":["g",[1,1,2,0,1,0],"เป็นที่รักของเพื่อนฝูง เจรจาเก่ง มีมิตรแท้คอยช่วยเหลือ ความรักราบรื่น ร่วมงานกับผู้อื่นแล้วได้ผลดี"],
+    "24":["g",[2,1,1,0,1,0],"ความสัมพันธ์กับผู้คนเป็นบันไดสู่ความมั่นคง ทำงานเป็นทีมได้ดี มีผู้ใหญ่และเพื่อนร่วมงานพร้อมสนับสนุน"],
+    "26":["g",[1,1,2,0,1,1],"อ่อนโยน มีเมตตา ครอบครัวอบอุ่น ได้รับความรักและความไว้วางใจ เหมาะกับงานดูแลผู้อื่นหรืองานที่ต้องละเอียดอ่อน"],
+    "29":["g",[1,2,1,0,1,1],"มีโชคลาภจากผู้คนรอบข้าง คนที่พบมักหวังดี ผู้ใหญ่และคนต่างถิ่นมีส่วนนำโอกาสดีๆ เข้ามา"],
+    "32":["g",[1,1,2,0,1,1],"พูดจาน่าฟัง มีเสน่ห์ดึงดูดคนรอบตัว ความรักและมิตรภาพมาเสมอ เหมาะกับงานที่ต้องพบปะผู้คนและงานเจรจา"],
+    "35":["g",[1,2,1,0,1,1],"ปรับตัวเก่ง สื่อสารเก่ง มีโอกาสใหม่ๆ เข้ามาอยู่เสมอ ชอบเดินทางและเรียนรู้ มักได้โชคจากการติดต่อกับผู้คน"],
+    "36":["g",[1,1,2,0,0,1],"เข้ากับคนง่ายและมีเสน่ห์ ศิลปะและการสื่อสารเป็นจุดเด่น ความรักหวานชื่นและได้รับคำชื่นชมจากคนรอบข้าง"],
+    "39":["g",[2,1,0,0,1,1],"ใช้ความสามารถด้านการสื่อสารสร้างความสำเร็จ ได้รับการยอมรับในสังคม ชื่อเสียงและโอกาสมาจากการพูดและการนำเสนอ"],
+    "41":["g",[2,1,0,1,1,0],"ตั้งใจจริงและมีระเบียบ วางรากฐานมั่นคง งานที่เริ่มต้นด้วยความรอบคอบมักเติบโตอย่างยั่งยืน"],
+    "42":["g",[1,1,1,1,1,0],"ความสัมพันธ์มั่นคงและอบอุ่น มีคนคอยพยุงในยามยาก การทำงานร่วมกับผู้อื่นช่วยให้ก้าวไปได้ไกล"],
+    "45":["g",[1,1,0,0,2,1],"ขยันเรียนรู้ ปรับตัวเข้ากับสถานการณ์ใหม่ได้ดี ชอบแสวงหาความรู้ เหมาะกับงานวิเคราะห์และงานที่ต้องพัฒนาตนเอง"],
+    "46":["g",[1,0,2,1,0,1],"รักครอบครัวและใส่ใจรายละเอียด มีความรับผิดชอบสูง ความรักมั่นคง ชีวิตสงบและเป็นระเบียบ"],
+    "51":["g",[1,1,0,0,2,2],"หัวไวและช่างสังเกต คิดริเริ่มสิ่งใหม่ได้ดี ประสาทสัมผัสไว ตัดสินใจเร็วและมักถูกจังหวะ"],
+    "53":["g",[1,2,1,0,1,1],"โชคดีจากการเดินทางและการติดต่อสื่อสาร ได้พบเพื่อนใหม่และโอกาสใหม่ๆ อารมณ์ดี เป็นที่ต้อนรับในทุกที่"],
+    "56":["g",[1,1,2,0,1,1],"ชอบความเปลี่ยนแปลงและความสวยงาม มีเสน่ห์ดึงดูด ความรักมีสีสัน รักอิสระแต่ก็รักครอบครัว"],
+    "59":["g",[1,1,0,0,2,2],"ใฝ่รู้และมองโลกกว้าง คิดเชื่อมโยงเรื่องต่างๆ ได้ดี ผู้ใหญ่เมตตา ผู้คนต่างวัยรับฟัง มีโอกาสได้เรียนรู้และเดินทางไกล"],
+    "61":["g",[2,1,1,0,1,0],"มีภาวะผู้นำที่อบอุ่น ดูแลคนในทีมได้ดี รับผิดชอบสูง ได้รับความไว้วางใจจากทั้งครอบครัวและที่ทำงาน"],
+    "62":["g",[1,1,2,1,0,1],"ใจดี ประนีประนอมเก่ง มีผู้คนรักใคร่ ความรักและครอบครัวมั่นคง ได้รับความช่วยเหลือจากคนใกล้ตัวเสมอ"],
+    "63":["g",[1,1,2,0,1,1],"สุนทรียะและการสื่อสารเป็นจุดเด่น เข้าสังคมเก่ง ความรักและมิตรภาพมีสีสัน ได้รับความชื่นชมจากคนรอบข้าง"],
+    "64":["g",[1,0,1,2,0,1],"ดูแลตนเองและครอบครัวดี ชีวิตเป็นระเบียบ ความสัมพันธ์มั่นคง สุขภาพแข็งแรงเมื่อรักษาสมดุลชีวิต"],
+    "65":["g",[1,1,2,0,1,1],"อ่อนโยน ชอบการเปลี่ยนแปลงที่สวยงาม มีเสน่ห์ดึงดูดใจ ความรักและครอบครัวเป็นแหล่งกำลังใจ"],
+    "69":["g",[1,1,2,1,1,1],"ใจเมตตา รักครอบครัว มีความสุขจากการให้ ผู้คนเอ็นดู ความรักเติมเต็ม ชีวิตมีที่พึ่งทางใจ"],
+    "91":["g",[2,1,0,0,1,1],"โดดเด่นด้วยความสามารถและวิสัยทัศน์ ผู้ใหญ่ให้การสนับสนุน เริ่มต้นสิ่งใหม่แล้วมักไปได้ไกล"],
+    "92":["g",[1,1,2,0,1,1],"มีเมตตาและเป็นที่รักของผู้คน มิตรภาพและความรักเป็นแรงหนุน ทำงานร่วมกับผู้อื่นแล้วราบรื่น"],
+    "93":["g",[2,1,1,0,1,1],"สื่อสารสร้างสรรค์และมีเสน่ห์ ชื่อเสียงมาจากการพูดหรือผลงานที่เผยแพร่ โอกาสจากผู้คนหลากหลายเข้ามาเสมอ"],
+    "95":["g",[1,1,0,0,2,2],"หูตากว้างไกล ใฝ่เรียนรู้ ผู้ใหญ่ให้การสนับสนุน เหมาะกับงานที่ต้องเดินทาง ค้นคว้า และเผยแพร่ความรู้"],
+    "96":["g",[1,1,2,0,1,1],"ใจดีและมีเสน่ห์ ผู้คนวางใจ ความรักหวานชื่น ได้รับความเมตตาและความช่วยเหลือจากคนรอบข้าง"],
+    "98":["g",[2,2,0,0,1,1],"มีบารมีและโชคด้านทรัพย์สิน ผู้ใหญ่อุปถัมภ์ ความตั้งใจจริงนำมาซึ่งความสำเร็จและความมั่นคงในหน้าที่"],
+
+    "00":["b",[-2,-1,0,-1,0,-1],"พลังงานว่างเปล่า ขาดแรงผลักดัน ความตั้งใจมักไม่ต่อเนื่อง ควรตั้งเป้าหมายให้ชัดเจนและอย่าปล่อยเวลาผ่านไปเฉยๆ"],
+    "03":["b",[-1,-1,-1,0,0,-1],"คิดมากและลังเลง่าย สื่อสารแล้วอาจเกิดความเข้าใจผิด ควรตรวจสอบข้อมูลก่อนตัดสินใจและพูดให้ชัดเจน"],
+    "04":["b",[-2,-1,0,-1,0,0],"งานมักติดขัดหรือล่าช้า ต้องใช้ความพยายามมากกว่าปกติ ควรวางแผนสำรองและอย่ากดดันตัวเองเกินไป"],
+    "07":["b",[-1,0,-1,-1,-1,-1],"ชอบเก็บตัวและคิดคนเดียว อาจห่างเหินจากคนรอบข้าง ควรเปิดใจพูดคุยและแบ่งปันความรู้สึกกับคนใกล้ชิด"],
+    "09":["b",[-1,-1,0,0,-1,-2],"อุดมคติสูงจนคาดหวังเกินจริง อาจผิดหวังจากคนหรือสถานการณ์ ควรเผื่อใจและมองความเป็นจริงให้มากขึ้น"],
+    "10":["b",[-1,-1,0,-1,-1,0],"เริ่มต้นได้แต่ไม่ค่อยมีแรงต่อ ความคิดดีแต่ขาดการสนับสนุน ควรหาผู้ช่วยหรือคนที่คอยผลักดัน"],
+    "13":["b",[-1,-1,-1,0,0,-1],"ใจร้อนและพูดเร็ว อาจสร้างความเข้าใจผิดโดยไม่ตั้งใจ ควรคิดก่อนพูดและระวังการตัดสินใจเรื่องเงินทอง"],
+    "17":["b",[-1,-1,0,-1,-1,-1],"เอาแต่ใจตนเองและอยู่ลำพังมากไป อาจเจออุปสรรคจากการไม่รับฟัง ควรเปิดรับคำแนะนำของผู้อื่น"],
+    "30":["b",[-1,-1,-1,0,-1,-1],"ความคิดฟุ้งซ่าน พูดมากแต่ผลลัพธ์น้อย ควรโฟกัสสิ่งสำคัญทีละอย่างและระวังการเสียเวลากับเรื่องไม่จำเป็น"],
+    "31":["b",[-1,-1,0,-1,-1,0],"พูดจาตรงเกินไปจนกระทบใจคนรอบข้าง ความสัมพันธ์อาจสะดุด ควรเลือกคำพูดและจังหวะให้เหมาะสม"],
+    "37":["b",[-1,-1,-1,0,-1,-1],"มีความคิดล้ำแต่สื่อสารไม่ตรงกับคนอื่น อาจถูกเข้าใจผิดหรือรู้สึกโดดเดี่ยว ควรอธิบายความคิดให้ชัดและเปิดใจรับฟัง"],
+    "40":["b",[-2,-1,0,-1,0,0],"ถูกจำกัดด้วยกรอบและความกังวล งานหนักแต่ผลตอบแทนล่าช้า ควรพักผ่อนและกระจายความเสี่ยงเรื่องเงิน"],
+    "47":["b",[-1,-1,0,-1,-1,-1],"วิเคราะห์ละเอียดจนเครียด แบกความกังวลไว้คนเดียว ควรผ่อนคลายและแบ่งงานให้ผู้อื่นช่วย"],
+    "70":["b",[-1,-1,-1,-1,0,-1],"ห่างเหินและปิดกั้นความรู้สึก โอกาสอาจผ่านเลยเพราะไม่กล้าเริ่ม ควรเปิดโอกาสให้ตนเองและคนใหม่ๆ"],
+    "73":["b",[-1,-1,-1,0,-1,-1],"คิดลึกจนตัดสินใจช้า พลาดจังหวะดีได้ง่าย ควรกำหนดเวลาตัดสินใจและเชื่อมั่นในข้อมูลที่มี"],
+    "74":["b",[-2,-1,0,-1,-1,0],"ยึดติดกับความคิดตนเอง งานที่ต้องอาศัยความยืดหยุ่นอาจติดขัด ควรปรับตัวและรับฟังมุมมองใหม่"],
+    "77":["b",[-1,-1,0,-1,-1,-2],"จมอยู่กับความคิดและโลกส่วนตัวมากเกินไป ระวังความเหงาและความเครียดสะสม ควรออกไปพบปะผู้คนและทำกิจกรรมนอกบ้าน"],
+    "90":["b",[-1,-1,0,0,-1,-1],"อุดมคติสูงแต่จบงานไม่ค่อยลง ความตั้งใจดีอาจสูญเปล่าถ้าไม่วางแผน ควรแบ่งงานเป็นขั้นตอนเล็กๆ"],
+    "94":["b",[-2,-1,0,-1,0,0],"แบกรับภาระของผู้อื่นมากเกินไป อาจเหนื่อยล้าและเสียโอกาสของตนเอง ควรรู้จักปฏิเสธและดูแลตนเองก่อน"],
+    "97":["b",[-1,-1,-1,0,-1,-1],"ใจดีแต่มักคิดคนเดียวจนเก็บความรู้สึก อาจเข้าใจผิดกับคนรอบข้างได้ ควรพูดคุยกันตรงๆ"],
+    "99":["b",[-1,-1,0,-1,-1,-1],"ให้มากเกินจนตนเองหมดแรง ความเสียสละอาจไม่ได้รับการตอบแทน ควรตั้งขอบเขตและวางแผนการเงินให้รัดกุม"],
+    "01":["n",[-1,-1,0,0,0,0],"เริ่มจากความว่างเปล่า ไอเดียดีแต่ยังไม่มีแรงสนับสนุนชัดเจน ต้องลงมือเองและสร้างพื้นฐานให้แน่น"],
+    "02":["n",[0,-1,0,0,0,0],"พึ่งพาผู้อื่นมากกว่าตนเอง ความสัมพันธ์มีแต่ยังไม่ชัดเจน ควรตั้งเป้าหมายและกำหนดบทบาทให้ชัด"],
+    "05":["n",[-1,0,0,0,0,0],"ชอบเปลี่ยนแปลงแต่ยังไร้ทิศทาง ความคิดกระโดด ควรจับประเด็นสำคัญและสานต่อสิ่งที่เริ่มไว้"],
+    "06":["n",[0,0,1,0,0,0],"อ่อนโยนแต่ขาดความมั่นใจ ความรักและครอบครัวอบอุ่นในวงแคบ ควรกล้าแสดงออกมากขึ้น"],
+    "08":["n",[-1,-1,0,-1,0,0],"พลังอำนาจที่ยังไม่มีเป้าหมาย ทำงานหนักแต่ผลตอบแทนล่าช้า ควรวางแผนการเงินและตั้งเป้าให้ชัด"],
+    "11":["n",[1,0,0,0,0,0],"ผู้นำสองเท่า ตัดสินใจเร็วและมั่นใจ แต่ระวังความดื้อและการไม่ฟังผู้อื่น เหมาะกับงานที่ต้องริเริ่ม"],
+    "12":["n",[1,1,1,0,0,0],"ผู้นำที่มีผู้ช่วยดี ทำงานเป็นทีมได้ ได้รับความร่วมมือจากคนรอบข้าง เหมาะกับงานประสานงานและบริหารทีม"],
+    "18":["n",[2,1,0,0,0,0],"ผู้นำที่เข้าใจธุรกิจ กล้าตัดสินใจเรื่องเงินและการลงทุน เหมาะกับงานบริหารและเจ้าของกิจการ ควรระวังความใจร้อน"],
+    "20":["n",[-1,-1,0,0,0,0],"พึ่งพาผู้อื่นแต่ยังไม่มั่นคง ความสัมพันธ์ขึ้นลงตามคนรอบข้าง ควรสร้างฐานของตัวเองให้แข็งแรง"],
+    "21":["n",[1,1,1,0,0,0],"ประสานงานเก่งและมีผู้นำที่ดีคอยนำ ทำงานเป็นทีมได้ราบรื่น ควรกล้าตัดสินใจด้วยตนเองบ้าง"],
+    "22":["n",[0,0,1,0,0,1],"เน้นความสัมพันธ์และการประนีประนอมมาก อ่อนไหวง่าย มีเพื่อนและคู่คิดดี แต่อาจลังเลตัดสินใจ"],
+    "25":["n",[1,1,1,0,1,1],"เข้าใจคนและปรับตัวเก่ง ชอบเรียนรู้จากผู้อื่น โอกาสมักมาจากเครือข่ายความสัมพันธ์"],
+    "27":["n",[0,-1,0,0,0,1],"ละเอียดอ่อนและใช้ความรู้สึกนำ ชอบคิดลึกเรื่องความสัมพันธ์ ควรสื่อสารตรงๆ เพื่อไม่ให้เข้าใจผิด"],
+    "28":["n",[2,1,0,0,0,0],"ประสานผลประโยชน์ได้ดี เหมาะกับงานเจรจาและงานร่วมลงทุน ได้พันธมิตรที่มีศักยภาพ"],
+    "33":["n",[0,1,1,0,0,0],"ช่างพูดคุยและเข้าสังคมเก่ง มีเพื่อนมาก แต่ระวังการกระจายความสนใจจนไม่ลงลึก"],
+    "34":["n",[1,0,0,0,1,0],"สื่อสารและวางแผนไปพร้อมกัน พูดแล้วทำ งานมีระเบียบ เหมาะกับงานสอนและงานประสานงานที่ต้องเป็นระบบ"],
+    "38":["n",[2,1,0,0,0,0],"สื่อสารเก่งและมีหัวธุรกิจ เจรจาต่อรองได้ดี เหมาะกับงานขายและการตลาด"],
+    "43":["n",[1,0,0,0,1,0],"ทำงานเป็นระบบและสื่อสารชัดเจน วางแผนแล้วบอกต่อได้ดี เหมาะกับงานเอกสารและงานประสานภายในองค์กร"],
+    "44":["n",[0,-1,0,-1,0,0],"ยึดกฎระเบียบและความมั่นคงเข้มข้น ทำงานหนักแต่ระวังความเครียดและความเคร่งเกินไป ควรให้เวลาพักผ่อน"],
+    "48":["n",[1,0,0,-1,0,0],"งานหนักแต่ผลตอบแทนตามมา สร้างฐานะอย่างช้าๆ ระวังการแบกภาระเกินตัว"],
+    "49":["n",[1,1,0,0,0,0],"วางรากฐานเพื่อไปสู่ความสำเร็จ อดทนและมีความรับผิดชอบ ผลงานได้รับการยอมรับในระยะยาว"],
+    "50":["n",[-1,0,0,0,0,0],"ชอบเปลี่ยนแปลงแต่ขาดจุดยึด ระวังการเริ่มแล้วทิ้งกลางทาง ควรกำหนดเป้าหมายระยะยาว"],
+    "52":["n",[1,1,1,0,1,0],"ปรับตัวได้ดีและเข้ากับคนง่าย ชอบเรียนรู้จากผู้อื่น มีโอกาสใหม่จากเครือข่ายเพื่อน"],
+    "54":["n",[1,0,0,0,1,0],"เรียนรู้เร็วและวางแผนเป็นระบบ ปรับเปลี่ยนให้เป็นรูปเป็นร่างได้ เหมาะกับงานที่ต้องพัฒนาต่อเนื่อง"],
+    "55":["n",[0,1,0,-1,0,0],"รักอิสระและความเปลี่ยนแปลงมาก ชีวิตมีสีสันและโอกาสใหม่ แต่ระวังความไม่นิ่งและการใช้จ่ายเกินตัว"],
+    "57":["n",[0,0,-1,0,1,1],"เรียนรู้และคิดวิเคราะห์ไปพร้อมกัน ชอบค้นคว้าลึก แต่ควรระวังการอยู่กับตัวเองมากเกินไป"],
+    "58":["n",[1,1,0,0,0,0],"ชอบเปลี่ยนแปลงและกล้าลงทุน เห็นโอกาสทางธุรกิจไว ควรกระจายความเสี่ยงและไม่ทุ่มหมดตัว"],
+    "60":["n",[-1,0,1,0,0,0],"รักครอบครัวและมีเสน่ห์ แต่ขาดแรงผลักดันด้านงาน ควรตั้งเป้าหมายให้ชัดเพื่อเสริมความมั่นคง"],
+    "66":["n",[0,0,1,1,0,0],"เสน่ห์และความรักเข้มข้น ห่วงใยครอบครัว ผู้คนเอ็นดู ระวังการยึดติดกับความสัมพันธ์มากเกินไป"],
+    "67":["n",[0,0,0,0,1,1],"รักครอบครัวและชอบเก็บตัวใคร่ครวญ ความสัมพันธ์ลึกซึ้งแต่พูดน้อย ควรสื่อสารความรู้สึกให้ชัด"],
+    "68":["n",[2,1,1,0,0,0],"ความรักและความมั่งคั่งเดินไปด้วยกัน ครอบครัวเป็นกำลังหนุนด้านการเงิน เหมาะกับธุรกิจครอบครัว"],
+    "71":["n",[0,-1,-1,0,1,0],"ชอบคิดคนเดียวและริเริ่มด้วยตัวเอง เก่งเฉพาะด้านแต่อาจขาดผู้สนับสนุน ควรเปิดใจร่วมงานกับผู้อื่น"],
+    "72":["n",[0,0,0,0,1,1],"คิดลึกและละเอียดอ่อนต่อความรู้สึกผู้อื่น เหมาะกับงานให้คำปรึกษา แต่ระวังการเก็บกดอารมณ์"],
+    "75":["n",[1,0,0,0,2,1],"วิเคราะห์และปรับตัวเก่ง สนใจเรื่องลึกซึ้ง ชอบเรียนรู้เรื่องใหม่ๆ เหมาะกับงานวิจัยและงานเทคนิค"],
+    "76":["n",[0,0,1,0,1,1],"ความคิดลึกซึ้งผสมความอ่อนโยน เข้าใจผู้คนดีแต่พูดน้อย ความรักมั่นคงเมื่อเปิดใจ"],
+    "78":["n",[0,-1,-1,-1,0,0],"ความคิดเข้มแข็งและยึดมั่นสูง ตัดสินใจแล้วไม่ค่อยฟังใคร ระวังความแข็งกระด้างที่กระทบความสัมพันธ์"],
+    "79":["n",[0,1,0,0,1,1],"คิดลึกและมุ่งสู่เป้าหมายที่สูง ชอบช่วยเหลือผู้อื่นอย่างเงียบๆ เหมาะกับงานที่ใช้ปัญญาและอุดมการณ์"],
+    "80":["n",[-1,-1,0,-1,0,0],"พลังอำนาจที่ยังไม่มีทิศทาง ทำงานหนักแต่ผลลัพธ์ไม่ชัด ควรวางแผนการเงินรัดกุม"],
+    "81":["n",[2,1,0,0,0,0],"ธุรกิจและการริเริ่มไปด้วยกัน กล้าลงทุนและตัดสินใจ ผลตอบแทนมักตามมา ระวังความใจร้อน"],
+    "82":["n",[2,1,1,0,0,0],"มีหัวการค้าและเจรจาเก่ง ได้พันธมิตรทางธุรกิจ ความร่วมมือนำมาซึ่งรายได้"],
+    "83":["n",[2,1,1,0,0,0],"ขายเก่ง พูดจูงใจคนได้ เหมาะกับงานการตลาด งานเจรจา และงานที่ต้องเข้าสังคม"],
+    "84":["n",[1,0,0,-1,0,0],"ทำงานหนักเป็นระบบและได้ผลตอบแทนที่มั่นคง เหมาะกับงานบริหารและงานเทคนิค ระวังความเครียดสะสม"],
+    "85":["n",[1,1,0,0,1,0],"เห็นช่องทางทำเงินไวและปรับตัวเก่ง เหมาะกับงานที่ต้องเปลี่ยนแปลงตามตลาด ควรบริหารความเสี่ยง"],
+    "86":["n",[1,1,2,0,0,0],"ธุรกิจที่เกี่ยวกับความสวยงามและการบริการมีโอกาสดี ได้รับความรักและความช่วยเหลือจากครอบครัว"],
+    "87":["n",[0,-1,0,-1,1,0],"มุ่งมั่นและคิดวิเคราะห์เก่ง แต่ยึดความคิดตนมาก ควรฟังผู้อื่นและยืดหยุ่นเรื่องการเงิน"],
+    "88":["n",[2,1,-1,-1,0,0],"พลังธุรกิจเข้มข้น มุ่งมั่นสร้างฐานะ ผลงานเด่นแต่ต้องระวังการทำงานหนักจนลืมสุขภาพและคนใกล้ชิด"],
+    "89":["n",[2,1,0,0,0,1],"ความสำเร็จทางธุรกิจที่มาพร้อมความเมตตา ได้รับการสนับสนุนจากผู้ใหญ่และผู้คนรอบตัว เหมาะกับงานบริหารที่ต้องการความเชื่อถือ"]
+  };
+
+  // short headline for every pair, shown as "89 : <title>" in the prophecy section
+  var PAIR_TITLES = {
+    "00":"คู่พลังงานว่างเปล่า","01":"คู่เริ่มจากความว่าง","02":"คู่พึ่งพาผู้อื่น","03":"คู่คิดมากลังเล","04":"คู่งานติดขัดล่าช้า",
+    "05":"คู่เปลี่ยนแปลงไร้ทิศทาง","06":"คู่อ่อนโยนขาดมั่นใจ","07":"คู่เก็บตัวห่างเหิน","08":"คู่พลังที่ยังไร้เป้าหมาย","09":"คู่อุดมคติสูงเกินจริง",
+    "10":"คู่เริ่มได้แต่ขาดแรงต่อ","11":"คู่ผู้นำสองเท่า","12":"คู่ผู้นำมีผู้ช่วย","13":"คู่ใจร้อนพูดเร็ว","14":"คู่ผู้นำผู้ลงมือทำ",
+    "15":"คู่นักเจรจาช่างเรียนรู้","16":"คู่เสน่ห์อบอุ่น","17":"คู่เอาแต่ใจอยู่ลำพัง","18":"คู่ผู้นำนักธุรกิจ","19":"คู่ความสามารถโดดเด่น",
+    "20":"คู่ยังไม่มั่นคง","21":"คู่ประสานงานมีผู้นำ","22":"คู่ประนีประนอมอ่อนไหว","23":"คู่มิตรภาพและความรัก","24":"คู่ผู้ใหญ่อุปถัมภ์",
+    "25":"คู่เข้าใจคนปรับตัวเก่ง","26":"คู่ความอ่อนโยนและครอบครัว","27":"คู่ละเอียดอ่อนคิดลึก","28":"คู่พันธมิตรทางธุรกิจ","29":"คู่โชคลาภจากผู้คน",
+    "30":"คู่ความคิดฟุ้งซ่าน","31":"คู่พูดตรงกระทบใจ","32":"คู่วาจาน่าฟัง","33":"คู่ช่างพูดคุยเข้าสังคม","34":"คู่สื่อสารอย่างเป็นระบบ",
+    "35":"คู่นักสื่อสารผู้ปรับตัว","36":"คู่ศิลปะและเสน่ห์","37":"คู่ความคิดล้ำสื่อสารยาก","38":"คู่นักขายหัวธุรกิจ","39":"คู่ชื่อเสียงจากการสื่อสาร",
+    "40":"คู่ถูกจำกัดด้วยกรอบ","41":"คู่รากฐานมั่นคง","42":"คู่พยุงกันและกัน","43":"คู่ทำงานเป็นระบบ","44":"คู่เคร่งระเบียบ",
+    "45":"คู่ใฝ่รู้ปรับตัวเก่ง","46":"คู่รักครอบครัวรับผิดชอบสูง","47":"คู่วิเคราะห์จนเครียด","48":"คู่งานหนักผลตอบแทนตามมา","49":"คู่วางรากฐานสู่ความสำเร็จ",
+    "50":"คู่ชอบเปลี่ยนขาดจุดยึด","51":"คู่หัวไวช่างสังเกต","52":"คู่เข้ากับคนง่าย","53":"คู่โชคจากการเดินทาง","54":"คู่เรียนรู้เร็วเป็นระบบ",
+    "55":"คู่รักอิสระ","56":"คู่เสน่ห์และความเปลี่ยนแปลง","57":"คู่นักค้นคว้าลึกซึ้ง","58":"คู่กล้าลงทุน","59":"คู่ปัญญากว้างไกล",
+    "60":"คู่รักครอบครัวขาดแรงผลักดัน","61":"คู่ผู้นำผู้อบอุ่น","62":"คู่ใจดีประนีประนอม","63":"คู่สุนทรียะและการสื่อสาร","64":"คู่ดูแลสุขภาพและครอบครัว",
+    "65":"คู่อ่อนโยนมีเสน่ห์","66":"คู่เสน่ห์เข้มข้น","67":"คู่ใคร่ครวญลึกซึ้ง","68":"คู่รักและความมั่งคั่ง","69":"คู่เมตตาและความรัก",
+    "70":"คู่ปิดกั้นความรู้สึก","71":"คู่คิดเองทำเอง","72":"คู่ละเอียดอ่อนให้คำปรึกษา","73":"คู่คิดลึกตัดสินใจช้า","74":"คู่ยึดติดความคิดตน",
+    "75":"คู่นักวิเคราะห์ผู้ปรับตัว","76":"คู่ลึกซึ้งอ่อนโยน","77":"คู่จมอยู่กับโลกส่วนตัว","78":"คู่ยึดมั่นแข็งกระด้าง","79":"คู่ปัญญาและอุดมการณ์",
+    "80":"คู่พลังไร้ทิศทาง","81":"คู่ธุรกิจและการริเริ่ม","82":"คู่หัวการค้าเจรจาเก่ง","83":"คู่นักขายนักเจรจา","84":"คู่ทำงานหนักเป็นระบบ",
+    "85":"คู่เห็นช่องทางทำเงินไว","86":"คู่ธุรกิจความงามและบริการ","87":"คู่มุ่งมั่นแต่ยึดตน","88":"คู่พลังธุรกิจเข้มข้น","89":"คู่ธุรกิจพร้อมเมตตา",
+    "90":"คู่ตั้งใจดีแต่จบไม่ลง","91":"คู่วิสัยทัศน์โดดเด่น","92":"คู่เมตตาเป็นที่รัก","93":"คู่ชื่อเสียงสร้างสรรค์","94":"คู่แบกรับภาระเกินตัว",
+    "95":"คู่หูตากว้างไกล","96":"คู่ใจดีมีเสน่ห์","97":"คู่ใจดีแต่เก็บความรู้สึก","98":"คู่บารมีและทรัพย์","99":"คู่ให้มากจนหมดแรง"
+  };
+
+  var CATEGORIES = [
+    {label:"การเงิน/การงาน", icon:'<path d="M4 18l5-5 4 3 7-8"/><path d="M15 8h5v5"/>'},
+    {label:"โชคลาภ", icon:'<circle cx="9" cy="8" r="3"/><circle cx="15" cy="8" r="3"/><circle cx="9" cy="14" r="3"/><circle cx="15" cy="14" r="3"/><path d="M12 15v6"/>'},
+    {label:"เสน่ห์/ความรัก", icon:'<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.6-7 10-7 10z"/>'},
+    {label:"สุขภาพ", icon:'<path d="M12 21C7 17 4 13.5 4 10a4 4 0 018-1 4 4 0 018 1c0 3.5-3 7-8 11z"/><path d="M9 11h6M12 8v6"/>'},
+    {label:"สติปัญญา", icon:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.5 10.9c.4.4.5.8.5 1.1h6c0-.3.1-.7.5-1.1A6 6 0 0012 3z"/>'},
+    {label:"เซ้นส์", icon:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'}
+  ];
+
+  // Sum of all digits, read like a pair (41 -> pair "41"): a good pair lifts the
+  // grade by its total strength, a bad pair lowers it, anything else sits at C.
+  var GRADES = ["D","D+","C-","C","C+","B-","B","B+","A","A+"];
+  var GRADE_TIERS = [
+    {max:1, tone:"bad",  text:"ผลรวมของเบอร์นี้ให้พลังงานค่อนข้างอ่อนและมีจุดที่ควรระวัง แนะนำให้เสริมด้วยเลขมงคล เช่น เลขประจำวันเกิด หรือเลขที่ส่งเสริมด้านที่ต้องการ พร้อมตั้งเป้าหมายให้ชัดเจน"},
+    {max:2, tone:"low",  text:"ผลรวมอยู่ในระดับค่อนข้างต่ำ ยังไม่ส่งเสริมดวงเท่าที่ควร แนะนำให้เสริมความมงคลด้วยเลขประจำวันเกิดหรือเลขที่ตรงกับด้านที่ต้องการ เพื่อให้พลังงานดีขึ้น"},
+    {max:4, tone:"mid",  text:"ผลรวมอยู่ในระดับกลางๆ ไม่ส่งผลเสียชัดเจนแต่ยังไม่โดดเด่น ลองเสริมด้วยเลขมงคลที่ตรงกับด้านที่ต้องการ จะช่วยให้ภาพรวมดียิ่งขึ้น"},
+    {max:7, tone:"good", text:"ผลรวมส่งเสริมดวงในเชิงบวก มีโอกาสและแรงสนับสนุนจากคนรอบข้าง หากเสริมเลขมงคลที่ตรงกับด้านที่ต้องการ จะยิ่งเห็นผลเด่นชัดขึ้น"},
+    {max:9, tone:"top",  text:"ผลรวมให้พลังงานโดดเด่นมาก ส่งเสริมทั้งการงาน การเงิน และความสัมพันธ์ ควรรักษาพลังนี้ไว้ด้วยการตั้งใจทำสิ่งดีอย่างสม่ำเสมอ"}
+  ];
+
+  function strengthOf(key){
+    return PAIRS[key][1].reduce(function(a, v){ return a + v; }, 0);
+  }
+
+  function gradeIndexFor(key){
+    var e = PAIRS[key], strength = strengthOf(key);
+    if(e[0] === "g") return Math.max(5, Math.min(9, 1 + strength));
+    if(e[0] === "n") return Math.max(2, Math.min(5, 4 + strength));
+    return Math.max(0, 3 + Math.ceil(strength / 2));
+  }
+
+  function isGood(p){ return PAIRS[p] && PAIRS[p][0] === "g"; }
+  function isBad(p){ return PAIRS[p] && PAIRS[p][0] === "b"; }
+  function isMid(p){ return PAIRS[p] && PAIRS[p][0] === "n"; }
+  var TYPE_LABEL = {g: "เลขดี", b: "เลขเสีย", n: "เลขกลาง"};
+  var TYPE_CLASS = {g: "good", b: "bad", n: "mid"};
+  function pairsOf(d){
+    var out = [];
+    for(var i=0;i<d.length-1;i++) out.push(d.charAt(i)+d.charAt(i+1));
+    return out;
+  }
+  function uniq(arr){ return arr.filter(function(v,i){ return arr.indexOf(v) === i; }); }
+
+  // 10 digits -> 9 consecutive pairs; the last pairs are what people use and
+  // remember most, so they weigh more. Weight-sum kept equal to the original
+  // 6-pair tuning (7.5) via BASE_WEIGHT_SUM below, so scores stay comparable.
+  function weightsFor(n){
+    var w = [];
+    for(var i=0;i<n;i++) w.push(1);
+    if(n >= 2){ w[n-2] = 1.5; w[n-1] = 2; }
+    return w;
+  }
+  var BASE_WEIGHT_SUM = 1+1+1+1+1.5+2;
+
+  function chips(el, list, cls){
+    el.innerHTML = list.length
+      ? list.map(function(p){ return '<button type="button" class="pa-chip '+cls+'" data-pair="'+p+'">'+p+'</button>'; }).join("")
+      : '<span class="pa-none">ไม่มี</span>';
+  }
+
+  function meterData(catIndex, pairs, weights){
+    var g = 0, b = 0;
+    pairs.forEach(function(p, i){
+      var v = PAIRS[p][1][catIndex] * weights[i];
+      if(v > 0) g += v; else if(v < 0) b -= v;
+    });
+    return {label: CATEGORIES[catIndex].label, icon: CATEGORIES[catIndex].icon,
+      g: Math.min(5, Math.ceil(g / 2)), b: Math.min(5, Math.ceil(b / 2))};
+  }
+
+  function meterHTML(m){
+    var left = "", right = "";
+    for(var i=0;i<5;i++) left += '<div class="pa-seg'+(i >= 5-m.b ? ' on' : '')+'"></div>';
+    for(var j=0;j<5;j++) right += '<div class="pa-seg'+(j < m.g ? ' on' : '')+'"></div>';
+    var crown = '<span class="pa-cap crown"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg></span>';
+    var doom = '<span class="pa-cap doom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span>';
+    return '<div class="pa-meter"><div class="pa-meter-label">'+m.label+'</div>' +
+      '<div class="pa-meter-bar"><div class="pa-side left">'+left+(m.b === 5 ? doom : '')+'</div>' +
+      '<div class="pa-meter-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+m.icon+'</svg></div>' +
+      '<div class="pa-side right">'+right+(m.g === 5 ? crown : '')+'</div></div></div>';
+  }
+
+  var CAT_NAMES = ["การเงิน/การงาน", "โชคลาภ", "เสน่ห์/ความรัก", "สุขภาพ", "สติปัญญา", "เซ้นส์"];
+  var MAX_POINTS = 3000;
+
+  function verdictFor(pts){
+    if(pts >= 2400) return {cls: "v-good", icn: "✓", text: "เบอร์ดีมาก ส่งเสริมดวงชะตา"};
+    if(pts >= 1900) return {cls: "v-good", icn: "✓", text: "เบอร์ดี ส่งผลเชิงบวก"};
+    if(pts >= 1400) return {cls: "v-mid", icn: "–", text: "เบอร์ค่อนข้างดี มีด้านดีมากกว่าด้านเสีย"};
+    if(pts >= 900) return {cls: "v-mid", icn: "–", text: "เบอร์กลางๆ มีทั้งด้านดีและด้านเสีย"};
+    return {cls: "v-bad", icn: "!", text: "เบอร์ส่งผลเสียเป็นส่วนใหญ่ ลองพิจารณาเบอร์อื่น"};
+  }
+
+  // Pure computation over the FULL 10-digit number — no digits are skipped,
+  // and pairs span the whole number (not just the first couple of digits).
+  function computeAnalysis(digits){
+    var pairs = pairsOf(digits);
+    var weights = weightsFor(pairs.length);
+    var weightSum = weights.reduce(function(a, w){ return a + w; }, 0);
+
+    var sum = digits.split("").reduce(function(a, d){ return a + parseInt(d, 10); }, 0);
+    var sumKey = (sum < 10 ? "0" : "") + sum;
+    var gradeIdx = gradeIndexFor(sumKey);
+    var tier = GRADE_TIERS.filter(function(t){ return gradeIdx <= t.max; })[0];
+
+    var good = uniq(pairs.filter(isGood));
+    var bad = uniq(pairs.filter(isBad));
+    var mid = uniq(pairs.filter(isMid));
+    var meters = CATEGORIES.map(function(cat, idx){ return meterData(idx, pairs, weights); });
+
+    var W = 0;
+    pairs.forEach(function(p, i){ W += strengthOf(p) * weights[i]; });
+    var coef = 30 * (BASE_WEIGHT_SUM / weightSum);
+    var pts = Math.max(0, Math.min(MAX_POINTS, Math.round(1200 + coef * (W + strengthOf(sumKey)))));
+
+    return {
+      digits: digits, pairs: pairs, weights: weights,
+      sum: sum, sumKey: sumKey, gradeIdx: gradeIdx, gradeLabel: GRADES[gradeIdx], tier: tier,
+      good: good, bad: bad, mid: mid, meters: meters, pts: pts, verdict: verdictFor(pts)
+    };
+  }
+
+  // "เด่นมาก: ... · เสริม: ... · ควรระวัง: ..." from the pair's effect vector
+  function effectsLine(key){
+    var v = PAIRS[key][1], strong = [], mild = [], warn = [];
+    v.forEach(function(x, i){
+      if(x >= 2) strong.push(CAT_NAMES[i]); else if(x === 1) mild.push(CAT_NAMES[i]); else if(x < 0) warn.push(CAT_NAMES[i]);
+    });
+    var parts = [];
+    if(strong.length) parts.push("ส่งผลดีเด่นชัดด้าน" + strong.join(" ") );
+    if(mild.length) parts.push("ช่วยเสริมด้าน" + mild.join(" "));
+    if(warn.length) parts.push("ควรระวังด้าน" + warn.join(" "));
+    return parts.length ? parts.join(" · ") : "ไม่ส่งผลเด่นชัดต่อด้านใดเป็นพิเศษ";
+  }
+
+  function prophecyItem(key, label, extra, id){
+    var t = PAIRS[key][0];
+    return '<div class="pa-pro-item '+TYPE_CLASS[t]+'" id="'+id+'">' +
+      '<h4><span class="pa-pro-num">'+label+'</span><span class="pa-pro-sep"> : </span>'+PAIR_TITLES[key]+'<em>'+TYPE_LABEL[t]+'</em></h4>' +
+      '<p>'+PAIRS[key][2]+'</p>' +
+      '<p class="pa-pro-eff">'+effectsLine(key)+(extra ? ' · '+extra : '')+'</p></div>';
+  }
+
+  function renderProphecy(result){
+    var sum = result.sum, pairs = result.pairs, pts = result.pts, sumKey = result.sumKey;
+    var order = uniq(pairs);
+    var html = '<div class="pa-pro-score">คะแนนรวมความเป็นมงคลของเบอร์นี้คือ <b>'+pts.toLocaleString("en-US")+'</b>' +
+      '<small>เต็ม '+MAX_POINTS.toLocaleString("en-US")+' คะแนน · คำนวณจาก '+pairs.length+' คู่เลขในเบอร์ (คู่ท้ายถ่วงน้ำหนัก) รวมกับผลรวมของเบอร์ทั้ง 10 หลัก</small></div>';
+
+    html += '<h3 class="pa-pro-title">คำพยากรณ์อิทธิพลผลรวมของเบอร์</h3>' +
+      prophecyItem(sumKey, "ผลรวม " + sum + " (เลขคู่ " + sumKey + ")", "", "paSumPro");
+
+    html += '<h3 class="pa-pro-title">คำพยากรณ์คู่เลขอิทธิพลในเบอร์นี้</h3>' +
+      order.map(function(p){
+        var pos = [], n = pairs.length;
+        pairs.forEach(function(q, i){ if(q === p) pos.push(i + 1); });
+        var last = pos.indexOf(n) !== -1 || pos.indexOf(n - 1) !== -1;
+        return prophecyItem(p, p, "อยู่คู่ที่ " + pos.join(", ") + (last ? " (ตำแหน่งท้ายเบอร์ น้ำหนักมากกว่า)" : ""), "paPair" + p);
+      }).join("");
+
+    var note = pts < 900
+      ? "หมายเหตุ: คะแนนรวมต่ำกว่า 900 คะแนน เบอร์นี้มีจุดที่ควรระวังค่อนข้างมาก ควรเสริมด้วยการตั้งเป้าหมายให้ชัด ใช้เลขมงคลประจำวันเกิดร่วมด้วย หรือพิจารณาเบอร์ที่มีเลขดีอยู่ท้ายเบอร์"
+      : pts < 1900
+        ? "หมายเหตุ: เบอร์นี้อยู่ในระดับกลางๆ ผลดีผลเสียไม่ชัดเจน การเสริมเลขดีในคู่ท้ายจะช่วยให้ภาพรวมดีขึ้น"
+        : "หมายเหตุ: เบอร์นี้มีพลังส่งเสริมชีวิตในระดับดี ควรรักษาด้วยการตั้งใจทำสิ่งดีอย่างสม่ำเสมอ";
+    html += '<p class="pa-pro-note">'+note+' · เพื่อความบันเทิงเท่านั้น ไม่มีผลทางวิทยาศาสตร์รองรับ</p>';
+    return html;
+  }
+
+  function formatNum(d){ return d.slice(0,3) + "-" + d.slice(3,6) + "-" + d.slice(6); }
+
+  // ---------------- Single-number mode ----------------
+  var inputPanel = document.getElementById("paInputPanel");
+  var report = document.getElementById("paReport");
+  var explain = document.getElementById("paExplain");
+  var input = document.getElementById("paInput");
+  var errorEl = document.getElementById("paError");
+
+  function renderSingle(result){
+    document.getElementById("paBigNum").textContent = formatNum(result.digits);
+    document.getElementById("paSkipNote").textContent =
+      "วิเคราะห์ครบทั้ง 10 หลัก จาก " + result.pairs.length + " คู่เลขต่อเนื่อง (คู่ท้ายมีน้ำหนักมากกว่า)";
+    document.getElementById("paSeq").innerHTML =
+      '<div class="pa-seq-title">'+result.pairs.length+' คู่เลขที่ใช้วิเคราะห์ (คู่ท้ายมีน้ำหนักมากกว่า)</div>' +
+      result.pairs.map(function(p, i){
+        return '<button type="button" class="pa-chip '+TYPE_CLASS[PAIRS[p][0]]+'" data-pair="'+p+'">'+p+
+          '<small>'+(i >= result.weights.length - 2 ? "×" + result.weights[i] : "&nbsp;")+'</small></button>';
+      }).join("");
+
+    document.getElementById("paSumNum").textContent = result.sum;
+    document.getElementById("paSumCircle").className = "pa-sum-circle tone-" + result.tier.tone;
+    var dots = "";
+    for(var i=0;i<10;i++) dots += '<i style="left:'+(i/9*100)+'%"></i>';
+    document.getElementById("paGradeDots").innerHTML = dots;
+    var pct = result.gradeIdx / 9 * 100;
+    document.getElementById("paGradeCover").style.width = (100 - pct) + "%";
+    var marker = document.getElementById("paGradeMarker");
+    marker.textContent = result.gradeLabel;
+    marker.className = "pa-grade-marker tone-" + result.tier.tone;
+    marker.style.left = pct + "%";
+    document.getElementById("paSumText").textContent =
+      "ผลรวมของเบอร์ทั้ง 10 หลัก = " + result.sum + " ได้เกรดจากผลรวม " + result.gradeLabel + " " + result.tier.text +
+      " ผลรวม " + result.sumKey + " ตรงกับเลขคู่ " + result.sumKey + ": " + PAIRS[result.sumKey][2];
+
+    chips(document.getElementById("paGoodChips"), result.good, "good");
+    chips(document.getElementById("paBadChips"), result.bad, "bad");
+    chips(document.getElementById("paMidChips"), result.mid, "mid");
+
+    document.getElementById("paMeters").innerHTML = result.meters.map(meterHTML).join("");
+
+    document.getElementById("paVerdict").className = "pa-verdict " + result.verdict.cls;
+    document.getElementById("paVerdictIcn").textContent = result.verdict.icn;
+    document.getElementById("paVerdictText").textContent = result.verdict.text + " (" + result.pts.toLocaleString("en-US") + " คะแนน)";
+
+    explain.innerHTML = renderProphecy(result);
+    explain.classList.add("show");
+
+    compareReport.classList.remove("show");
+    inputPanel.style.display = "none";
+    report.classList.add("show");
+  }
+
+  report.addEventListener("click", function(e){
+    var chip = e.target.closest(".pa-chip[data-pair]");
+    if(!chip) return;
+    var panel = document.getElementById("paPair" + chip.getAttribute("data-pair"));
+    if(!panel) return;
+    panel.scrollIntoView({behavior: "smooth", block: "center"});
+    panel.classList.remove("flash");
+    void panel.offsetWidth;
+    panel.classList.add("flash");
+  });
+
+  var paBtn = document.getElementById("paBtn");
+
+  function refreshPlayUi(){
+    var note = document.getElementById("paPlayNote");
+    note.textContent = HwpPlay.note(playState);
+    note.classList.toggle("is-out", HwpPlay.exhausted(playState));
+    var out = HwpPlay.exhausted(playState);
+    paBtn.disabled = out;
+    document.getElementById("paCompareBtn").disabled = out;
+  }
+
+  function tryPlay(onOk){
+    HwpPlay.start(PLAY_URL, CSRF).then(function(r){
+      playState = r;
+      refreshPlayUi();
+      if (r.ok) onOk();
+    }).catch(function(){
+      refreshPlayUi();
+      alert("ไม่สามารถวิเคราะห์เบอร์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง");
+    });
+  }
+
+  function submit(){
+    var digits = input.value.replace(/\D/g, "");
+    if(digits.length !== 10){
+      errorEl.classList.add("show");
+      return;
+    }
+    errorEl.classList.remove("show");
+    tryPlay(function(){
+      try{ history.replaceState(null, "", "?phone=" + digits); }catch(e){}
+      renderSingle(computeAnalysis(digits));
+    });
+  }
+
+  input.addEventListener("input", function(){
+    input.value = input.value.replace(/\D/g, "").slice(0,10);
+  });
+  input.addEventListener("keydown", function(e){ if(e.key === "Enter") submit(); });
+  document.getElementById("paBtn").addEventListener("click", submit);
+  document.getElementById("paAgainBtn").addEventListener("click", function(){
+    report.classList.remove("show");
+    explain.classList.remove("show");
+    inputPanel.style.display = "";
+    input.value = "";
+    try{ history.replaceState(null, "", location.pathname); }catch(e){}
+    window.scrollTo(0, 0);
+    input.focus();
+  });
+
+  // ---------------- Compare-2-numbers mode ----------------
+  var compareToggle = document.getElementById("paCompareToggle");
+  var compareForm = document.getElementById("paCompareForm");
+  var inputA = document.getElementById("paInputA");
+  var inputB = document.getElementById("paInputB");
+  var compareError = document.getElementById("paCompareError");
+  var compareReport = document.getElementById("paCompareReport");
+  var compareGrid = document.getElementById("paCompareGrid");
+  var compareSummary = document.getElementById("paCompareSummary");
+
+  compareToggle.addEventListener("click", function(){
+    compareForm.style.display = compareForm.style.display === "none" ? "" : "none";
+  });
+  [inputA, inputB].forEach(function(el){
+    el.addEventListener("input", function(){ el.value = el.value.replace(/\D/g, "").slice(0,10); });
+  });
+  inputB.addEventListener("keydown", function(e){ if(e.key === "Enter") submitCompare(); });
+
+  function compareColHTML(result, label){
+    var goodHtml = result.good.length
+      ? result.good.map(function(p){ return '<span class="pa-chip good">'+p+'</span>'; }).join("")
+      : '<span class="pa-none">ไม่มี</span>';
+    var badHtml = result.bad.length
+      ? result.bad.map(function(p){ return '<span class="pa-chip bad">'+p+'</span>'; }).join("")
+      : '<span class="pa-none">ไม่มี</span>';
+    var seqHtml = result.pairs.map(function(p){ return '<span class="pa-chip '+TYPE_CLASS[PAIRS[p][0]]+'">'+p+'</span>'; }).join("");
+    return (
+      '<div class="pa-compare-col">' +
+        '<div class="pa-compare-label">'+label+'</div>' +
+        '<div class="pa-bignum pa-compare-bignum">'+formatNum(result.digits)+'</div>' +
+        '<div class="pa-compare-sumrow">' +
+          '<div class="pa-sum-circle sm tone-'+result.tier.tone+'"><span>ผลรวม</span><b>'+result.sum+'</b></div>' +
+          '<div class="pa-compare-gradebadge tone-'+result.tier.tone+'">เกรดผลรวม '+result.gradeLabel+'</div>' +
+        '</div>' +
+        '<div class="pa-seq pa-compare-seq">'+seqHtml+'</div>' +
+        '<div class="pa-box good sm"><span class="pa-box-tag">เลขดี</span><div class="pa-chips">'+goodHtml+'</div></div>' +
+        '<div class="pa-box bad sm"><span class="pa-box-tag">เลขเสีย</span><div class="pa-chips">'+badHtml+'</div></div>' +
+        '<div class="pa-right pa-compare-meters">' + result.meters.map(meterHTML).join("") + '</div>' +
+        '<div class="pa-verdict '+result.verdict.cls+'"><span class="pa-verdict-icn">'+result.verdict.icn+'</span><span>'+result.verdict.text+' ('+result.pts.toLocaleString("en-US")+' คะแนน)</span></div>' +
+      '</div>'
+    );
+  }
+
+  function submitCompare(){
+    var da = inputA.value.replace(/\D/g, "");
+    var db = inputB.value.replace(/\D/g, "");
+    if(da.length !== 10 || db.length !== 10){
+      compareError.classList.add("show");
+      return;
+    }
+    compareError.classList.remove("show");
+    tryPlay(function(){
+      var ra = computeAnalysis(da), rb = computeAnalysis(db);
+
+      var summary;
+      if(ra.pts === rb.pts){
+        summary = "เบอร์ทั้งสองมีคะแนนรวมเท่ากัน (" + ra.pts.toLocaleString("en-US") + " คะแนน)";
+      } else {
+        var winner = ra.pts > rb.pts ? "เบอร์ที่ 1" : "เบอร์ที่ 2";
+        summary = winner + " มีคะแนนรวมสูงกว่า (" + Math.max(ra.pts, rb.pts).toLocaleString("en-US") +
+          " ต่อ " + Math.min(ra.pts, rb.pts).toLocaleString("en-US") + " คะแนน)";
+      }
+      compareSummary.textContent = summary;
+      compareGrid.innerHTML = compareColHTML(ra, "เบอร์ที่ 1") + compareColHTML(rb, "เบอร์ที่ 2");
+
+      try{ history.replaceState(null, "", "?phoneA=" + da + "&phoneB=" + db); }catch(e){}
+
+      report.classList.remove("show");
+      explain.classList.remove("show");
+      inputPanel.style.display = "none";
+      compareReport.classList.add("show");
+    });
+  }
+
+  document.getElementById("paCompareBtn").addEventListener("click", submitCompare);
+  document.getElementById("paCompareAgainBtn").addEventListener("click", function(){
+    compareReport.classList.remove("show");
+    inputPanel.style.display = "";
+    compareForm.style.display = "";
+    inputA.value = ""; inputB.value = "";
+    try{ history.replaceState(null, "", location.pathname); }catch(e){}
+    window.scrollTo(0, 0);
+    inputA.focus();
+  });
+
+  refreshPlayUi();
+
+  // ---------------- Deep link ----------------
+  var params = new URLSearchParams(location.search);
+  var presetA = params.get("phoneA"), presetB = params.get("phoneB");
+  var preset = params.get("phone");
+  if(presetA && presetB && /^\d{10}$/.test(presetA) && /^\d{10}$/.test(presetB)){
+    inputA.value = presetA; inputB.value = presetB;
+    compareForm.style.display = "";
+    submitCompare();
+  } else if(preset && /^\d{10}$/.test(preset)){
+    input.value = preset;
+    submit();
+  }
+})();
+</script>
+{% endblock %}

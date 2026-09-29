@@ -1,0 +1,97 @@
+{% extends "base/base.html" %}
+{% block title %}มาตรฐาน (Standards) — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .std-row { margin-bottom: 16px; transition: opacity .15s ease; }
+  .std-row.is-deleting { opacity: .55; border-color: var(--red-600); border-style: dashed; }
+  .std-row-grid { display: grid; grid-template-columns: 200px 1fr; gap: 24px; }
+  .std-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .std-logo-preview {
+    height: 96px; border: 1px solid var(--line); border-radius: 12px; background: #fff;
+    display: flex; align-items: center; justify-content: center; padding: 12px; overflow: hidden;
+  }
+  .std-logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .std-logo-preview span { font-size: 12.5px; color: var(--muted); }
+  .std-logo-input { max-width: 100%; font-size: 12.5px; }
+  .std-row-footer { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .std-order { display: flex; align-items: center; gap: 8px; }
+  .std-order .form-input { width: 96px; }
+  .std-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--navy-700); cursor: pointer; }
+  .std-delete { color: var(--red-600); margin-left: auto; }
+  .std-delete-note { display: none; margin: 8px 0 0; font-size: 12.5px; color: var(--red-600); }
+  .std-row.is-deleting .std-delete-note { display: block; }
+  @media (max-width: 720px) {
+    .std-row-grid, .std-two-col { grid-template-columns: 1fr; gap: 0; }
+    .std-row-grid > div:first-child { margin-bottom: 16px; }
+    .std-delete { margin-left: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="9" r="6"/><path d="M8.5 13.9L7 22l5-3 5 3-1.5-8.1"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">มาตรฐาน (Standards)</h1>
+      <p class="page-desc">โลโก้มาตรฐานในส่วน "มีมาตรฐาน รองรับ" ของหน้าแรก — รายการเดียวกันนี้แสดงในเมนู Standard › Testing STD. ด้วย เพิ่ม ลบ เปลี่ยนโลโก้ หรือแก้ลิงก์ได้ที่นี่ แล้วกด "บันทึกทั้งหมด"</p>
+    </div>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ formset.management_form }}
+  {% for error in formset.non_form_errors %}<div class="form-error" style="margin-bottom:12px;">{{ error }}</div>{% endfor %}
+
+  <div id="std-rows">
+    {% for form in formset %}
+      {% include "core/_standard_form_row.html" %}
+    {% endfor %}
+  </div>
+
+  <button type="button" id="std-add-btn" class="btn btn-ghost btn-app">+ เพิ่มมาตรฐาน</button>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary btn-app">บันทึกทั้งหมด</button>
+    <a class="btn btn-ghost btn-app" href="{% url 'core:home' %}#standards">ดูหน้าแรก</a>
+  </div>
+</form>
+
+<template id="std-empty-row">{% include "core/_standard_form_row.html" with form=formset.empty_form %}</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var rows = document.getElementById("std-rows");
+  var total = document.getElementById("id_std-TOTAL_FORMS");
+  var template = document.getElementById("std-empty-row");
+
+  document.getElementById("std-add-btn").addEventListener("click", function () {
+    var index = parseInt(total.value, 10);
+    rows.insertAdjacentHTML("beforeend", template.innerHTML.replace(/__prefix__/g, index));
+    total.value = index + 1;
+    var row = rows.lastElementChild;
+    row.scrollIntoView({behavior: "smooth", block: "center"});
+    row.querySelector('input[name$="-name"]').focus({preventScroll: true});
+  });
+
+  rows.addEventListener("change", function (e) {
+    var input = e.target;
+    var row = input.closest(".std-row");
+    if (input.classList.contains("std-logo-input") && input.files[0]) {
+      var img = document.createElement("img");
+      img.src = URL.createObjectURL(input.files[0]);
+      row.querySelector(".std-logo-preview").replaceChildren(img);
+    }
+    if (/-DELETE$/.test(input.name)) {
+      row.classList.toggle("is-deleting", input.checked);
+    }
+  });
+})();
+</script>
+{% endblock %}

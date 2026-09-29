@@ -1,0 +1,428 @@
+{% extends "base/base.html" %}
+{% load static perms %}
+{% block title %}Squares — Happy Workplace{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/happy_workplace.css' %}?v={% now 'U' %}">{% endblock %}
+{% block content %}
+{% has_perm "happy_workplace.edit" as can_edit %}
+<div class="hwp-wordle-layout-wrap">
+  <a class="hwp-back-link" href="{% url 'happy_workplace:index' %}">← กลับ Happy Workplace</a>
+</div>
+<div class="hwp-wordle-layout">
+  <div class="hwp-game-shell hwp-wordle-main">
+    <div class="hwp-game-panel" id="sqIntro">
+      <h1>Squares</h1>
+      <p class="sub">ในตารางตัวอักษร 4×4 มีคำศัพท์ภาษาอังกฤษทั่วไปซ่อนอยู่ ลากเมาส์หรือปัดนิ้วผ่านตัวอักษรที่อยู่ติดกัน (รวมแนวทแยง) เพื่อสะกดคำ ทายถูกจะเห็นความหมายทันที ทุกตัวอักษรถูกใช้พอดีคำ ยิ่งได้คำยาวยิ่งได้คะแนนมาก (ตัวอักษรละ 10 คะแนน เคลียร์ทั้งตารางโบนัส +50) แข่งกับเวลา {{ squares_settings.session_minutes }} นาที</p>
+      <p class="hwp-play-note" id="sqPlayNote"></p>
+      <button type="button" class="fs-shake-btn" id="sqStartBtn">เริ่มเล่น</button>
+    </div>
+
+    <div class="hwp-game-panel" id="sqPlayArea" style="display:none;">
+      <div class="wd-stats-bar">
+        <div class="wd-stat"><span class="wd-stat-label">เวลาเหลือ</span><span class="wd-stat-value" id="sqTimer">{{ squares_settings.session_minutes|stringformat:"02d" }}:00</span></div>
+        <div class="wd-stat"><span class="wd-stat-label">คะแนน</span><span class="wd-stat-value" id="sqScore">0</span></div>
+        <div class="wd-stat"><span class="wd-stat-label">พบแล้ว</span><span class="wd-stat-value" id="sqFoundCount">0</span></div>
+        <div class="wd-stat"><span class="wd-stat-label">เคลียร์</span><span class="wd-stat-value" id="sqClearCount">0</span></div>
+      </div>
+      <div class="sq-play">
+        <div class="sq-board-col">
+          <div class="sq-current" id="sqCurrent">&nbsp;</div>
+          <div class="sq-board-wrap" id="sqBoardWrap">
+            <div class="sq-board" id="sqBoard"></div>
+            <svg class="sq-lines" id="sqLines" aria-hidden="true"></svg>
+            <div class="sq-loading" id="sqLoading">กำลังโหลดปริศนา...</div>
+          </div>
+          <div class="sq-msg" id="sqMsg">&nbsp;</div>
+          <button type="button" class="btn btn-ghost btn-app btn-sm" id="sqSkipBtn">ข้ามปริศนานี้</button>
+        </div>
+        <div class="sq-list" id="sqList"></div>
+      </div>
+    </div>
+
+    <div class="hwp-game-panel" id="sqGameOver" style="display:none;">
+      <h1>หมดเวลา!</h1>
+      <p class="sub">คะแนนรวมของคุณ: <strong id="sqFinalScore"></strong> คะแนน · พบ <strong id="sqFinalFound"></strong> คำ · เคลียร์ <strong id="sqFinalClear"></strong> ตาราง</p>
+      <div id="sqSaveBox">
+        <input type="text" class="pa-input" id="sqNameInput" placeholder="กรอกชื่อสำหรับกระดานคะแนน (ไม่เกิน 25 ตัวอักษร)" maxlength="25">
+        <div><button type="button" class="fs-shake-btn" id="sqSaveBtn">บันทึกคะแนน</button></div>
+      </div>
+      <p class="hwp-play-note" id="sqPlayNote2"></p>
+      <div><button type="button" class="fs-shake-btn" id="sqAgainBtn" style="margin-top:12px;">เล่นอีกครั้ง</button></div>
+      <div class="sq-recap" id="sqRecap"></div>
+    </div>
+  </div>
+
+  <div class="hwp-wordle-side">
+    <div class="hwp-game-panel" style="text-align:left;">
+      <h3 style="font-family:'Poppins',sans-serif;color:var(--navy-700);font-size:16px;margin:0 0 14px;text-align:center;">อันดับคะแนนสูงสุด</h3>
+      <div id="sqLeaderboard"></div>
+      {% if can_edit %}
+      <div class="wd-admin-box">
+        <div class="wd-admin-title">ตั้งค่าเกม (Admin)</div>
+        <form method="post" action="{% url 'happy_workplace:squares_settings_update' %}">
+          {% csrf_token %}
+          {% for field in settings_form %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึกการตั้งค่า</button>
+        </form>
+        <form method="post" action="{% url 'happy_workplace:play_game_limit_update' 'squares' %}" class="wd-limit-form">
+          {% csrf_token %}
+          {% for field in play_form %}
+          <div class="form-group">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-primary btn-app btn-sm">บันทึกจำนวนครั้ง</button>
+        </form>
+        <a class="btn btn-primary btn-app btn-sm wd-reset-link" href="{% url 'happy_workplace:squares_words' %}">จัดการคลังคำศัพท์ ({{ word_count }} คำ)</a>
+        <a class="btn-delete wd-reset-link" href="{% url 'happy_workplace:game_scores_reset' 'squares' %}">รีเซ็ตตารางคะแนน</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{{ leaderboard|json_script:"sqLeaderboardData" }}
+{{ squares_settings_json|json_script:"sqSettingsData" }}
+{{ play|json_script:"sqPlayData" }}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/hwp_leaderboard.js' %}?v={% now 'U' %}"></script>
+<script src="{% static 'js/hwp_play.js' %}?v={% now 'U' %}"></script>
+<script>
+(function(){
+  var SIZE = 4, CELLS = 16, MIN_WORD = 3, LETTER_POINTS = 10, CLEAR_BONUS = 50, TIME_BONUS_SECONDS = 10;
+  var PUZZLE_URL = "{% url 'happy_workplace:squares_puzzle' %}";
+  var SCORE_URL = "{% url 'happy_workplace:game_score_submit' 'squares' %}";
+  var PLAY_URL = "{% url 'happy_workplace:play_start' 'squares' %}";
+  var playState = JSON.parse(document.getElementById("sqPlayData").textContent);
+  var CSRF = "{{ csrf_token }}";
+  var CATS = {W: "งานและสำนักงาน", F: "อาหาร", T: "การเดินทาง", H: "สุขภาพ", E: "อารมณ์", C: "เครื่องแต่งกาย"};
+  var settings = JSON.parse(document.getElementById("sqSettingsData").textContent);
+  var leaderboard = JSON.parse(document.getElementById("sqLeaderboardData").textContent);
+
+  var boardEl = document.getElementById("sqBoard");
+  var linesEl = document.getElementById("sqLines");
+  var wrapEl = document.getElementById("sqBoardWrap");
+  var msgEl = document.getElementById("sqMsg");
+  var curEl = document.getElementById("sqCurrent");
+  var listEl = document.getElementById("sqList");
+  var loadingEl = document.getElementById("sqLoading");
+  var tiles = [];
+  for (var i = 0; i < CELLS; i++) {
+    var t = document.createElement("div");
+    t.className = "sq-tile";
+    t.setAttribute("data-i", i);
+    boardEl.appendChild(t);
+    tiles.push(t);
+  }
+
+  var puzzle = null, nextPuzzle = null, fetching = null;
+  var found = [], cellColor = [], path = [], dragging = false;
+  var score = 0, foundTotal = 0, cleared = 0, sessionWords = [];
+  var endAt = 0, timer = null, playing = false, busy = false, msgTimer = null;
+
+  function renderLb(){ HwpLeaderboard.render(document.getElementById("sqLeaderboard"), leaderboard, "คำที่พบ"); }
+  function show(id, on){ document.getElementById(id).style.display = on ? "" : "none"; }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function fmt(sec){ var m = Math.floor(sec / 60), s = sec % 60; return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s; }
+
+  function say(text, kind, sticky){
+    msgEl.className = "sq-msg" + (kind ? " " + kind : "");
+    msgEl.innerHTML = text || "&nbsp;";
+    clearTimeout(msgTimer);
+    if (text && !sticky) msgTimer = setTimeout(function(){ msgEl.className = "sq-msg"; msgEl.innerHTML = "&nbsp;"; }, 6000);
+  }
+
+  function fetchPuzzle(){
+    if (fetching) return fetching;
+    fetching = fetch(PUZZLE_URL, {headers: {"Accept": "application/json"}})
+      .then(function(r){ if (!r.ok) throw new Error("puzzle"); return r.json(); })
+      .then(function(p){ fetching = null; return p; })
+      .catch(function(e){ fetching = null; throw e; });
+    return fetching;
+  }
+  function prefetch(){
+    if (nextPuzzle || fetching) return;
+    fetchPuzzle().then(function(p){ nextPuzzle = p; }).catch(function(){});
+  }
+
+  function setPuzzle(p){
+    puzzle = p;
+    found = []; cellColor = []; path = [];
+    for (var k = 0; k < CELLS; k++) { tiles[k].textContent = p.grid.charAt(k); cellColor.push(-1); }
+    drawBoard();
+    renderList();
+    curEl.innerHTML = "&nbsp;";
+    prefetch();
+  }
+
+  function loadNext(){
+    busy = true;
+    loadingEl.style.display = "flex";
+    var ready = nextPuzzle ? Promise.resolve(nextPuzzle) : fetchPuzzle();
+    nextPuzzle = null;
+    return ready.then(function(p){
+      setPuzzle(p);
+      loadingEl.style.display = "none";
+      busy = false;
+    }).catch(function(){
+      loadingEl.textContent = "โหลดปริศนาไม่สำเร็จ กำลังลองใหม่...";
+      return new Promise(function(resolve){
+        setTimeout(function(){ loadingEl.textContent = "กำลังโหลดปริศนา..."; resolve(loadNext()); }, 1500);
+      });
+    });
+  }
+
+  function drawBoard(){
+    var sel = {};
+    path.forEach(function(c, idx){ sel[c] = idx; });
+    for (var k = 0; k < CELLS; k++) {
+      var cls = "sq-tile";
+      if (cellColor[k] >= 0) cls += " f" + (cellColor[k] % 5);
+      else if (k in sel) cls += " sel";
+      tiles[k].className = cls;
+    }
+    drawLines();
+  }
+
+  function center(k){
+    var b = boardEl.getBoundingClientRect(), r = tiles[k].getBoundingClientRect();
+    return [r.left - b.left + r.width / 2, r.top - b.top + r.height / 2];
+  }
+  function drawLines(){
+    var b = boardEl.getBoundingClientRect();
+    linesEl.setAttribute("width", b.width);
+    linesEl.setAttribute("height", b.height);
+    linesEl.setAttribute("viewBox", "0 0 " + b.width + " " + b.height);
+    if (path.length < 2) { linesEl.innerHTML = ""; return; }
+    var pts = path.map(function(c){ var p = center(c); return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ");
+    linesEl.innerHTML = '<polyline points="' + pts + '" fill="none" stroke="currentColor" stroke-width="' + (b.width / 14).toFixed(1) +
+      '" stroke-linecap="round" stroke-linejoin="round" opacity=".38"/>';
+  }
+
+  function renderList(){
+    var groups = {};
+    puzzle.words.forEach(function(w){ (groups[w.word.length] = groups[w.word.length] || []).push(w); });
+    var html = "";
+    Object.keys(groups).map(Number).sort(function(a, b){ return a - b; }).forEach(function(len){
+      html += '<div class="sq-group"><div class="sq-group-title">' + len + ' ตัวอักษร</div>';
+      groups[len].forEach(function(w){
+        var idx = found.indexOf(w.word);
+        if (idx >= 0) {
+          html += '<div class="sq-word f' + (idx % 5) + '"><strong>' + esc(w.word) + '</strong>' +
+            '<span class="sq-cat">' + esc(CATS[w.category] || "") + '</span>' +
+            '<div class="sq-mean">' + esc(w.meaning) + '</div></div>';
+        } else {
+          var dots = ""; for (var d = 0; d < len; d++) dots += "●";
+          html += '<div class="sq-word sq-hidden"><span class="sq-dots">' + dots + '</span>' +
+            '<span class="sq-cat">' + esc(CATS[w.category] || "") + '</span></div>';
+        }
+      });
+      html += '</div>';
+    });
+    listEl.innerHTML = html;
+  }
+
+  function currentWord(){ return path.map(function(c){ return puzzle.grid.charAt(c); }).join(""); }
+
+  function adjacent(a, b){
+    var ar = Math.floor(a / SIZE), ac = a % SIZE, br = Math.floor(b / SIZE), bc = b % SIZE;
+    return a !== b && Math.abs(ar - br) <= 1 && Math.abs(ac - bc) <= 1;
+  }
+
+  function tileAt(x, y){
+    var el = document.elementFromPoint(x, y);
+    if (!el || !el.classList || !el.classList.contains("sq-tile")) return -1;
+    var r = el.getBoundingClientRect();
+    var dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
+    if (Math.sqrt(dx * dx + dy * dy) > r.width * 0.42) return -1;
+    return parseInt(el.getAttribute("data-i"), 10);
+  }
+
+  function refreshCurrent(){
+    curEl.textContent = path.length ? currentWord() : " ";
+    drawBoard();
+  }
+
+  function onDown(e){
+    if (!playing || busy || !puzzle) return;
+    var k = tileAt(e.clientX, e.clientY);
+    if (k < 0 || cellColor[k] >= 0) return;
+    e.preventDefault();
+    dragging = true;
+    path = [k];
+    refreshCurrent();
+  }
+  function onMove(e){
+    if (!dragging) return;
+    e.preventDefault();
+    var k = tileAt(e.clientX, e.clientY);
+    if (k < 0 || cellColor[k] >= 0) return;
+    var last = path[path.length - 1];
+    if (k === last) return;
+    if (path.length > 1 && k === path[path.length - 2]) { path.pop(); refreshCurrent(); return; }
+    if (path.indexOf(k) === -1 && adjacent(last, k)) { path.push(k); refreshCurrent(); }
+  }
+  function onUp(){
+    if (!dragging) return;
+    dragging = false;
+    if (path.length >= MIN_WORD) submitPath(); else clearPath();
+  }
+  function clearPath(){ path = []; refreshCurrent(); }
+
+  function submitPath(){
+    var word = currentWord();
+    var entry = null;
+    puzzle.words.forEach(function(w){ if (w.word === word) entry = w; });
+    if (!entry) {
+      flash("wrong");
+      say("<strong>" + esc(word) + "</strong> ไม่ใช่คำในปริศนานี้ ลองใหม่อีกครั้ง", "bad");
+      return;
+    }
+    if (found.indexOf(word) >= 0) {
+      flash("wrong");
+      say("คุณพบคำว่า <strong>" + esc(word) + "</strong> แล้ว", "bad");
+      return;
+    }
+    var color = found.length;
+    found.push(word);
+    path.forEach(function(c){ cellColor[c] = color; });
+    var gained = word.length * LETTER_POINTS;
+    score += gained; foundTotal++;
+    sessionWords.push({word: entry.word, meaning: entry.meaning, category: entry.category});
+    path = [];
+    drawBoard();
+    renderList();
+    updateStats();
+    curEl.innerHTML = "&nbsp;";
+    if (playing) { endAt += TIME_BONUS_SECONDS * 1000; tick(); }
+    say("ถูกต้อง! <strong>" + esc(entry.word) + "</strong> — " + esc(entry.meaning) + " (+" + gained + " คะแนน · +" + TIME_BONUS_SECONDS + " วินาที)", "good", true);
+    if (found.length === puzzle.words.length) {
+      score += CLEAR_BONUS; cleared++;
+      updateStats();
+      busy = true;
+      say("เคลียร์ทั้งตาราง! โบนัส +" + CLEAR_BONUS + " · <strong>" + esc(entry.word) + "</strong> — " + esc(entry.meaning), "good", true);
+      setTimeout(function(){ if (playing) loadNext(); }, 1600);
+    }
+  }
+
+  function flash(cls){
+    var sel = path.slice();
+    sel.forEach(function(c){ tiles[c].classList.add(cls); });
+    path = [];
+    setTimeout(function(){ sel.forEach(function(c){ tiles[c].classList.remove(cls); }); drawBoard(); }, 380);
+    curEl.innerHTML = "&nbsp;";
+    drawLines();
+  }
+
+  function updateStats(){
+    document.getElementById("sqScore").textContent = score.toLocaleString();
+    document.getElementById("sqFoundCount").textContent = foundTotal;
+    document.getElementById("sqClearCount").textContent = cleared;
+  }
+
+  function tick(){
+    var left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    document.getElementById("sqTimer").textContent = fmt(left);
+    wrapEl.classList.toggle("sq-low", left <= 30);
+    if (left <= 0) finish();
+  }
+
+  function startGame(){
+    score = 0; foundTotal = 0; cleared = 0; sessionWords = []; playing = false;
+    updateStats();
+    show("sqIntro", false); show("sqGameOver", false); show("sqPlayArea", true);
+    say("", "");
+    document.getElementById("sqTimer").textContent = fmt(settings.sessionSeconds);
+    puzzle = null; path = []; dragging = false;
+    loadNext().then(function(){
+      playing = true;
+      endAt = Date.now() + settings.sessionSeconds * 1000;
+      clearInterval(timer);
+      timer = setInterval(tick, 250);
+    });
+  }
+
+  function finish(){
+    if (!playing) return;
+    playing = false; dragging = false;
+    clearInterval(timer);
+    wrapEl.classList.remove("sq-low");
+    var missed = puzzle ? puzzle.words.filter(function(w){ return found.indexOf(w.word) < 0; }) : [];
+    document.getElementById("sqFinalScore").textContent = score.toLocaleString();
+    document.getElementById("sqFinalFound").textContent = foundTotal;
+    document.getElementById("sqFinalClear").textContent = cleared;
+    show("sqSaveBox", score > 0);
+    var html = "";
+    if (sessionWords.length) {
+      html += '<h3>คำศัพท์ที่คุณพบ</h3>' + sessionWords.map(function(w){
+        return '<div class="sq-recap-row"><strong>' + esc(w.word) + '</strong><span>' + esc(w.meaning) + '</span></div>';
+      }).join("");
+    }
+    if (missed.length) {
+      html += '<h3>คำที่ยังหาไม่เจอในตารางสุดท้าย</h3>' + missed.map(function(w){
+        return '<div class="sq-recap-row missed"><strong>' + esc(w.word) + '</strong><span>' + esc(w.meaning) + '</span></div>';
+      }).join("");
+    }
+    document.getElementById("sqRecap").innerHTML = html;
+    show("sqPlayArea", false); show("sqGameOver", true);
+  }
+
+  boardEl.addEventListener("pointerdown", onDown);
+  window.addEventListener("pointermove", onMove, {passive: false});
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
+  window.addEventListener("resize", drawLines);
+
+  document.getElementById("sqSkipBtn").addEventListener("click", function(){
+    if (!playing || busy) return;
+    say("ข้ามปริศนา — ตารางใหม่กำลังมา", "", false);
+    loadNext();
+  });
+  function refreshPlayUi(){
+    var text = HwpPlay.note(playState), out = HwpPlay.exhausted(playState);
+    ["sqPlayNote", "sqPlayNote2"].forEach(function(id){
+      var el = document.getElementById(id);
+      el.textContent = text;
+      el.classList.toggle("is-out", out);
+    });
+    ["sqStartBtn", "sqAgainBtn"].forEach(function(id){ document.getElementById(id).disabled = out; });
+  }
+  function tryStart(){
+    var btns = [document.getElementById("sqStartBtn"), document.getElementById("sqAgainBtn")];
+    btns.forEach(function(b){ b.disabled = true; });
+    HwpPlay.start(PLAY_URL, CSRF).then(function(r){
+      playState = r;
+      refreshPlayUi();
+      if (r.ok) startGame();
+    }).catch(function(){
+      refreshPlayUi();
+      alert("เริ่มเกมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    });
+  }
+  document.getElementById("sqStartBtn").addEventListener("click", tryStart);
+  document.getElementById("sqAgainBtn").addEventListener("click", tryStart);
+  refreshPlayUi();
+  document.getElementById("sqSaveBtn").addEventListener("click", function(){
+    var btn = this;
+    var name = document.getElementById("sqNameInput").value.trim() || "ไม่ระบุชื่อ";
+    btn.disabled = true;
+    HwpLeaderboard.submit(SCORE_URL, CSRF, {name: name, score: score, detail: foundTotal + " คำ"})
+      .then(function(data){
+        leaderboard = data.leaderboard;
+        renderLb();
+        document.getElementById("sqNameInput").value = "";
+        show("sqSaveBox", false);
+      })
+      .catch(function(){ alert("บันทึกคะแนนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"); })
+      .then(function(){ btn.disabled = false; });
+  });
+
+  renderLb();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base/base.html" %}
+{% load perms %}
+{% load doc_extras %}
+{% block title %}List รายละเอียดเอกสาร — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items %}
+{% endblock %}
+
+{% block content %}
+{% has_perm "document.upload" as can_add %}
+{% has_perm "document.edit" as can_edit %}
+{% has_perm "document.delete" as can_delete %}
+
+<div class="page-head">
+  <div class="page-head-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+    </div>
+    <div>
+      <h1 class="page-title">List รายละเอียดเอกสาร</h1>
+      <p class="page-desc">รายการสเปคอุปกรณ์ตามปี พร้อมอ้างอิงไปยังเอกสาร Report Dev และ Report Sam ของแต่ละรายการ</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost btn-app" href="{% url 'documents:list' %}">← กลับไปหน้าตาราง</a>
+    {% if can_add %}
+      <a class="btn btn-primary btn-app" href="{% url 'documents:spec_create' %}">+ เพิ่มรายการ</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if can_add %}
+  <form method="post" action="{% url 'documents:spec_import' %}" enctype="multipart/form-data" class="spec-import-bar">
+    {% csrf_token %}
+    {{ import_form.excel_file }}
+    <button type="submit" class="btn btn-ghost btn-app">นำเข้าจาก Excel</button>
+    <span class="spec-import-hint">ไฟล์ .xlsx แถวแรกเป็นหัวตาราง: Year, Indoor, Outdoor, Report Dev, Report Sam</span>
+  </form>
+{% endif %}
+
+<div class="main-panel">
+  <div class="toolbar" id="specToolbar">
+    <div class="search-box" id="specSearchBox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="specSearchInput" value="{{ q }}" placeholder="ค้นหาปี, Indoor, Outdoor, รหัส Report..." autocomplete="off">
+      <button type="button" class="search-clear" id="specClearBtn" aria-label="ล้างคำค้นหา" {% if not q %}hidden{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <span class="count-info" id="specCountInfo">แสดง {{ page_obj.paginator.count }} รายการ</span>
+    <a class="btn btn-ghost btn-app" href="{% url 'documents:spec_export' %}?q={{ q|urlencode }}" id="specExportLink">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l4-4m-4 4l-4-4"/><path d="M4 17v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+      Export Excel
+    </a>
+  </div>
+
+  <div class="table-scroll-x">
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Year</th>
+          <th>Indoor</th>
+          <th>Outdoor</th>
+          <th>Report Dev</th>
+          <th>Report Sam</th>
+          {% if can_edit or can_delete %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody id="specTableBody">
+        {% include "documents/_equipment_spec_rows.html" %}
+      </tbody>
+    </table>
+  </div>
+
+  <div id="specPagination">
+    {% include "components/pagination.html" with page_obj=page_obj querystring=request.GET.urlencode %}
+  </div>
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('specSearchInput');
+  var clearBtn = document.getElementById('specClearBtn');
+  var tbody = document.getElementById('specTableBody');
+  var countInfo = document.getElementById('specCountInfo');
+  var exportLink = document.getElementById('specExportLink');
+  var pagination = document.getElementById('specPagination');
+  var listUrl = "{% url 'documents:spec_list' %}";
+  var exportUrl = "{% url 'documents:spec_export' %}";
+  var debounceTimer = null;
+  var currentRequest = 0;
+
+  function runSearch(value) {
+    var requestId = ++currentRequest;
+    fetch(listUrl + '?partial=rows&q=' + encodeURIComponent(value))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (requestId !== currentRequest) return;
+        tbody.innerHTML = data.rows_html;
+        countInfo.textContent = 'แสดง ' + data.count + ' รายการ';
+        pagination.innerHTML = data.pagination_html;
+      });
+    exportLink.href = exportUrl + '?q=' + encodeURIComponent(value);
+  }
+
+  input.addEventListener('input', function () {
+    var value = input.value.trim();
+    clearBtn.hidden = value.length === 0;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function () { runSearch(value); }, 250);
+  });
+
+  clearBtn.addEventListener('click', function () {
+    input.value = '';
+    clearBtn.hidden = true;
+    runSearch('');
+    input.focus();
+  });
+})();
+</script>
+{% endblock %}

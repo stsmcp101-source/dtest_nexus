@@ -1,0 +1,224 @@
+{% extends "base/base.html" %}
+{% load static tool_icons %}
+{% block title %}QR Code — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    {% tool_logo_url "qr_code" as logo_url %}
+    <div class="page-icon{% if logo_url %} has-img{% endif %}">
+      {% if logo_url %}<img src="{{ logo_url }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>{% endif %}
+    </div>
+    <div>
+      <h1 class="page-title">QR Code</h1>
+      <p class="page-desc">สร้าง QR Code จากเว็บไซต์ ข้อความ หรือบัตรธุรกิจดิจิทัล พร้อมปรับแต่งสีและกรอบ</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'utilities:index' %}" class="btn btn-app btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+      กลับหน้า Tools
+    </a>
+  </div>
+</div>
+
+<div class="qr-type-tabs">
+  <button type="button" class="qr-type-tab active" data-type="website">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>
+    เว็บไซต์
+  </button>
+  <button type="button" class="qr-type-tab" data-type="vcard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.3 16c0-1.7 1.4-3 3.2-3s3.2 1.3 3.2 3"/><path d="M14.5 9.5h4.5M14.5 13h4.5"/></svg>
+    บัตรธุรกิจดิจิทัล
+  </button>
+  <button type="button" class="qr-type-tab" data-type="text">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+    ข้อความ
+  </button>
+</div>
+
+<div class="qr-layout">
+  <div>
+
+    <div class="qr-section" id="qr-content-section">
+      <div class="qr-section-head" data-toggle-section>
+        <h3>เนื้อหา</h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+      <div class="qr-section-body">
+
+        <div class="qr-content-panel active" data-content="website">
+          <div class="qr-content-field">
+            <label class="form-label">URL เว็บไซต์ของคุณ</label>
+            <input class="form-input" type="text" id="qr-field-website" placeholder="www.my-website.com/d">
+            <p class="form-help">QR Code ของคุณจะถูกสร้างขึ้นโดยอัตโนมัติ</p>
+          </div>
+        </div>
+
+        <div class="qr-content-panel" data-content="vcard">
+          <div class="form-group"><label class="form-label">ชื่อ-นามสกุล</label><input class="form-input" type="text" id="qr-field-vcard-name" placeholder="สมชาย ใจดี"></div>
+          <div class="form-group"><label class="form-label">บริษัท / ตำแหน่ง</label><input class="form-input" type="text" id="qr-field-vcard-org" placeholder="dTest.nexus"></div>
+          <div class="form-group"><label class="form-label">เบอร์โทร</label><input class="form-input" type="text" id="qr-field-vcard-tel" placeholder="081-234-5678"></div>
+          <div class="form-group"><label class="form-label">อีเมล</label><input class="form-input" type="text" id="qr-field-vcard-email" placeholder="name@example.com"></div>
+          <div class="form-group"><label class="form-label">เว็บไซต์ <span class="form-label-optional">(ไม่บังคับ)</span></label><input class="form-input" type="text" id="qr-field-vcard-url" placeholder="www.example.com"></div>
+        </div>
+
+        <div class="qr-content-panel" data-content="text">
+          <div class="qr-content-field">
+            <label class="form-label">ข้อความ</label>
+            <textarea class="form-input" id="qr-field-text" rows="4" maxlength="2000" placeholder="พิมพ์ข้อความที่ต้องการ"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="qr-section" id="qr-design-section">
+      <div class="qr-section-head" data-toggle-section>
+        <h3>ออกแบบ</h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+      <div class="qr-section-body">
+
+        <div class="qr-subtabs">
+          <button type="button" class="qr-subtab active" data-subtab="frame">กรอบ</button>
+          <button type="button" class="qr-subtab" data-subtab="color">สี &amp; รูปทรง</button>
+        </div>
+
+        <div class="qr-subpanel active" data-subpanel="frame">
+          <div class="qr-frame-grid">
+
+            <div class="qr-frame-tile active" data-frame="none" title="ไม่มีกรอบ">
+              <div class="frame-preview fp-none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="bottom" title="ป้าย SCAN ME ด้านล่าง">
+              <div class="frame-preview"><span class="fp-dot"></span><span class="fp-label fp-label-bottom">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="top-pointer" title="ป้าย SCAN ME ด้านบนพร้อมลูกศร">
+              <div class="frame-preview fp-has-pointer"><span class="fp-pointer-label">SCAN ME</span><span class="fp-pointer-tri"></span><span class="fp-dot"></span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="badge" title="ป้ายวงกลมมุมกรอบ">
+              <div class="frame-preview"><span class="fp-dot"></span><span class="fp-badge-circle">A</span><span class="fp-label fp-label-bottom">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="shake" title="กรอบเขย่าเรียกความสนใจ">
+              <div class="frame-preview fp-shake"><span class="fp-shake-line fp-shake-l"></span><span class="fp-shake-line fp-shake-r"></span><span class="fp-dot"></span><span class="fp-label fp-label-bottom">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="torn" title="ป้ายฉีกขาดสไตล์ตั๋ว">
+              <div class="frame-preview fp-torn"><span class="fp-dot"></span><span class="fp-torn-edge"></span><span class="fp-label fp-label-torn">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="cursive" title="ข้อความลายมือ">
+              <div class="frame-preview fp-plain"><span class="fp-dot"></span><span class="fp-cursive">Scan me</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="cursive-arrow" title="ข้อความลายมือพร้อมลูกศร">
+              <div class="frame-preview fp-plain"><span class="fp-dot"></span><svg class="fp-arrow" viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4c6 10 16 14 24 12"/><path d="M23 12l6 5-7 3"/></svg><span class="fp-cursive fp-cursive-sm">Scan me</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="bag" title="ถุงช้อปปิ้ง">
+              <div class="frame-preview fp-bag"><span class="fp-bag-handle"></span><span class="fp-dot"></span><span class="fp-label fp-label-bottom">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="box" title="กล่องของขวัญ">
+              <div class="frame-preview fp-box"><span class="fp-ribbon-v"></span><span class="fp-ribbon-h"></span><span class="fp-dot"></span><span class="fp-label fp-label-bottom">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="cup" title="แก้วกาแฟ">
+              <div class="frame-preview fp-cup"><span class="fp-steam fp-steam-1"></span><span class="fp-steam fp-steam-2"></span><span class="fp-dot"></span><span class="fp-label fp-label-bottom">SCAN ME</span></div>
+            </div>
+
+            <div class="qr-frame-tile" data-frame="scooter" title="สกู๊ตเตอร์ส่งของ">
+              <div class="frame-preview fp-scooter">
+                <svg class="fp-scooter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="18" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M7 18h7l3-7h3M13 11L10 5H7"/></svg>
+                <span class="fp-dot"></span><span class="fp-label fp-label-bottom">SCAN ME</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="qr-subpanel" data-subpanel="color">
+          <div class="qr-color-grid">
+            <div class="qr-color-field">
+              <input type="color" id="qr-fg-color" value="#000000">
+              <span class="qc-label">สี QR Code</span>
+              <span class="qc-hex" id="qr-fg-hex">#000000</span>
+            </div>
+            <div class="qr-color-field">
+              <input type="color" id="qr-bg-color" value="#ffffff">
+              <span class="qc-label">สีพื้นหลัง</span>
+              <span class="qc-hex" id="qr-bg-hex">#ffffff</span>
+            </div>
+          </div>
+          <label class="form-label">รูปทรงจุด</label>
+          <div class="qr-shape-row">
+            <div class="qr-shape-opt active" data-shape="square">
+              <div class="shape-dots"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              <span class="shape-label">สี่เหลี่ยม</span>
+            </div>
+            <div class="qr-shape-opt" data-shape="rounded">
+              <div class="shape-dots"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              <span class="shape-label">มุมโค้ง</span>
+            </div>
+            <div class="qr-shape-opt" data-shape="circle">
+              <div class="shape-dots"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+              <span class="shape-label">วงกลม</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="qr-preview-panel">
+    <div class="qr-preview-card">
+      <div class="qr-preview-frame" id="qr-preview-frame">
+        <span class="qpf-pointer-label">SCAN ME</span>
+        <span class="qpf-pointer-tri"></span>
+        <span class="qpf-badge-circle">A</span>
+        <span class="qpf-shake-line qpf-shake-l"></span>
+        <span class="qpf-shake-line qpf-shake-r"></span>
+        <span class="qpf-torn-edge"></span>
+        <span class="qpf-cursive">Scan me</span>
+        <svg class="qpf-arrow" viewBox="0 0 60 36" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6c9 15 24 21 36 18"/><path d="M34 18l9 8-11 4"/></svg>
+        <span class="qpf-bag-handle"></span>
+        <span class="qpf-ribbon-v"></span><span class="qpf-ribbon-h"></span>
+        <span class="qpf-steam qpf-steam-1"></span><span class="qpf-steam qpf-steam-2"></span>
+        <svg class="qpf-scooter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="18" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M7 18h7l3-7h3M13 11L10 5H7"/></svg>
+        <img id="qr-preview-img" style="display:none;" alt="QR Code preview">
+        <p class="qr-preview-empty" id="qr-preview-empty">กรอกข้อมูลด้านซ้ายเพื่อสร้าง QR Code</p>
+        <span class="qpf-label qpf-label-bottom">SCAN ME</span>
+        <span class="qpf-label qpf-label-torn">SCAN ME</span>
+      </div>
+    </div>
+    <div class="qr-download-row">
+      <button type="button" class="qr-download-btn" id="qr-download-btn" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l4-4m-4 4l-4-4"/><path d="M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+        <span id="qr-download-label">ดาวน์โหลด PNG</span>
+      </button>
+      <button type="button" class="qr-download-toggle" id="qr-download-toggle" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="qr-download-menu" id="qr-download-menu">
+        <button type="button" data-format="png">ดาวน์โหลด PNG</button>
+        <button type="button" data-format="jpg">ดาวน์โหลด JPG</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/tools_qr.js' %}?v={% now 'U' %}" data-generate-url="{% url 'utilities:qr_generate' %}"></script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "base/base.html" %}
+{% load perms tool_icons module_logo %}
+{% block title %}{{ module_title }} — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+{% endblock %}
+
+{% block content %}
+{% has_perm "settings.edit" as can_edit_tool_links %}
+<div class="page-head">
+  <div class="page-head-left">
+    {% module_logo_url as module_logo %}
+    <div class="page-icon{% if module_logo %} has-img is-cover{% endif %}">
+      {% if module_logo %}<img src="{{ module_logo }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a3 3 0 00-4.2 4.2L4 17v3h3l6.5-6.5a3 3 0 004.2-4.2l-2.3 2.3-2-2z"/></svg>{% endif %}
+    </div>
+    <div>
+      <h1 class="page-title">{{ module_title }} <span class="tag">{{ module_tag }}</span></h1>
+      <p class="page-desc">{{ module_description }}</p>
+    </div>
+  </div>
+  {% if can_edit_tool_links %}
+  <div class="page-actions">
+    <a href="{% url 'utilities:icon_settings' %}" class="btn btn-app btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>
+      ตั้งค่าโลโก้
+    </a>
+    <a href="{% url 'utilities:link_settings' %}" class="btn btn-app btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      ตั้งค่าลิงก์
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{# ---------------- Documents ---------------- #}
+<div class="tool-section">
+  <div class="tool-section-head">
+    <h2 class="tool-section-title">Documents</h2>
+  </div>
+  <div class="tool-grid">
+
+    <a class="tool-card" href="{% url 'utilities:pdf_edit' %}">
+      {% tool_icon "pdf_edit" %}
+      <h4>PDF Edit</h4>
+      <p>รวม แยก ลบ แทรก และเข้ารหัสไฟล์ PDF ได้จากที่เดียว</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:qr_code' %}">
+      {% tool_icon "qr_code" %}
+      <h4>QR Code</h4>
+      <p>สร้าง QR Code จากข้อความหรือลิงก์ พร้อมดาวน์โหลด</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:document_converter' %}">
+      {% tool_icon "document_converter" %}
+      <h4>Document Converter</h4>
+      <p>แปลงไฟล์รูปภาพหลายไฟล์รวมเป็น PDF เดียว</p>
+    </a>
+
+  </div>
+</div>
+
+{# ---------------- Systems ---------------- #}
+<div class="tool-section">
+  <div class="tool-section-head">
+    <h2 class="tool-section-title">Systems</h2>
+  </div>
+  <div class="tool-grid">
+
+    {% if system_settings.tool_link_approve_doc %}
+      <a class="tool-card" href="{{ system_settings.tool_link_approve_doc }}" target="_blank" rel="noopener noreferrer">
+        <svg class="t-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
+    {% else %}
+      <div class="tool-card is-disabled" title="{% if can_edit_tool_links %}ยังไม่ได้ตั้งค่าลิงก์ — กดปุ่ม 'ตั้งค่าลิงก์' ด้านบนเพื่อเพิ่ม{% else %}ยังไม่ได้ตั้งค่าลิงก์ — แจ้งผู้ดูแลระบบ{% endif %}">
+    {% endif %}
+        {% tool_icon "approve_doc" %}
+        <h4>Approve Doc</h4>
+        <p>คลิกเพื่อเปิดลิงก์อนุมัติเอกสารบน Power Apps</p>
+        {% if not system_settings.tool_link_approve_doc %}<span class="t-soon">ยังไม่ได้ตั้งค่าลิงก์</span>{% endif %}
+    {% if system_settings.tool_link_approve_doc %}</a>{% else %}</div>{% endif %}
+
+    {% if system_settings.tool_link_kace %}
+      <a class="tool-card" href="{{ system_settings.tool_link_kace }}" target="_blank" rel="noopener noreferrer">
+        <svg class="t-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
+    {% else %}
+      <div class="tool-card is-disabled" title="{% if can_edit_tool_links %}ยังไม่ได้ตั้งค่าลิงก์ — กดปุ่ม 'ตั้งค่าลิงก์' ด้านบนเพื่อเพิ่ม{% else %}ยังไม่ได้ตั้งค่าลิงก์ — แจ้งผู้ดูแลระบบ{% endif %}">
+    {% endif %}
+        {% tool_icon "kace" %}
+        <h4>KACE Systems</h4>
+        <p>คลิกเพื่อเปิดระบบ KACE</p>
+        {% if not system_settings.tool_link_kace %}<span class="t-soon">ยังไม่ได้ตั้งค่าลิงก์</span>{% endif %}
+    {% if system_settings.tool_link_kace %}</a>{% else %}</div>{% endif %}
+
+    {% if system_settings.tool_link_pscapa %}
+      <a class="tool-card" href="{{ system_settings.tool_link_pscapa }}" target="_blank" rel="noopener noreferrer">
+        <svg class="t-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 13v6a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
+    {% else %}
+      <div class="tool-card is-disabled" title="{% if can_edit_tool_links %}ยังไม่ได้ตั้งค่าลิงก์ — กดปุ่ม 'ตั้งค่าลิงก์' ด้านบนเพื่อเพิ่ม{% else %}ยังไม่ได้ตั้งค่าลิงก์ — แจ้งผู้ดูแลระบบ{% endif %}">
+    {% endif %}
+        {% tool_icon "pscapa" %}
+        <h4>PScapa</h4>
+        <p>คลิกเพื่อเปิดระบบ PScapa</p>
+        {% if not system_settings.tool_link_pscapa %}<span class="t-soon">ยังไม่ได้ตั้งค่าลิงก์</span>{% endif %}
+    {% if system_settings.tool_link_pscapa %}</a>{% else %}</div>{% endif %}
+
+  </div>
+</div>
+
+{# ---------------- Calculators ---------------- #}
+<div class="tool-section">
+  <div class="tool-section-head">
+    <h2 class="tool-section-title">Calculators</h2>
+  </div>
+  <div class="tool-grid">
+
+    <a class="tool-card" href="{% url 'utilities:calculators_tool' 'temperature' %}">
+      {% tool_icon "temperature" %}
+      <h4>Temperature</h4>
+      <p>แปลงหน่วยอุณหภูมิ °C / °F / K</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:calculators_tool' 'capacity' %}">
+      {% tool_icon "capacity" %}
+      <h4>Capacity</h4>
+      <p>แปลงหน่วยความเย็น BTU/hr, TR, kW, kcal/hr</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:calculators_tool' 'salary' %}">
+      {% tool_icon "salary" %}
+      <h4>Salary</h4>
+      <p>คำนวณเงินเดือน รายวัน รายชั่วโมง และค่าล่วงเวลา</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:calculators_tool' 'unit' %}">
+      {% tool_icon "unit" %}
+      <h4>Unit Converter</h4>
+      <p>แปลงหน่วยความยาว น้ำหนัก ปริมาตร และพื้นที่</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:calculators_tool' 'percentage' %}">
+      {% tool_icon "percentage" %}
+      <h4>Percentage</h4>
+      <p>คำนวณเปอร์เซ็นต์ ส่วนลด และอัตราการเปลี่ยนแปลง</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:calculators_tool' 'datetime' %}">
+      {% tool_icon "datetime" %}
+      <h4>Date &amp; Time</h4>
+      <p>คำนวณระยะห่างวันที่ และบวก/ลบวัน</p>
+    </a>
+
+  </div>
+</div>
+
+{# ---------------- Engineering ---------------- #}
+<div class="tool-section">
+  <div class="tool-section-head">
+    <h2 class="tool-section-title">Engineering</h2>
+  </div>
+  <div class="tool-grid">
+
+    <a class="tool-card" href="{% url 'utilities:engineering_tool' 'oee' %}">
+      {% tool_icon "oee" %}
+      <h4>OEE</h4>
+      <p>Overall Equipment Effectiveness — Availability × Performance × Quality</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:engineering_tool' 'cycle' %}">
+      {% tool_icon "cycle" %}
+      <h4>Cycle Time</h4>
+      <p>เวลาที่ใช้จริงในการผลิตต่อชิ้น</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:engineering_tool' 'power' %}">
+      {% tool_icon "power" %}
+      <h4>Power</h4>
+      <p>คำนวณกำลังไฟฟ้า 1 เฟส และ 3 เฟส</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:engineering_tool' 'pressure' %}">
+      {% tool_icon "pressure" %}
+      <h4>Pressure</h4>
+      <p>แปลงหน่วยความดัน Pa, bar, psi, kgf/cm², atm</p>
+    </a>
+
+    <a class="tool-card" href="{% url 'utilities:engineering_tool' 'saturation-temp' %}">
+      {% tool_icon "saturation_temp" %}
+      <h4>SATURATION TEMP</h4>
+      <p>คำนวณอุณหภูมิอิ่มตัว SC, SH และ DSH พร้อมแผนภาพ P-h</p>
+    </a>
+
+  </div>
+</div>
+{% endblock %}

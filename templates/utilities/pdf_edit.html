@@ -1,0 +1,286 @@
+{% extends "base/base.html" %}
+{% load static tool_icons %}
+{% block title %}PDF Edit — {{ APP_DISPLAY_NAME }}{% endblock %}
+
+{% block breadcrumb %}
+{% include "components/breadcrumb.html" with items=breadcrumb_items|default:'' %}
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div class="page-head-left">
+    {% tool_logo_url "pdf_edit" as logo_url %}
+    <div class="page-icon{% if logo_url %} has-img{% endif %}">
+      {% if logo_url %}<img src="{{ logo_url }}" alt="">{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg>{% endif %}
+    </div>
+    <div>
+      <h1 class="page-title">PDF Edit</h1>
+      <p class="page-desc">รวม แยก แทรก ลบหน้า และล็อก/ปลดล็อกไฟล์ PDF — ประมวลผลบนเซิร์ฟเวอร์ ไม่มีการเก็บไฟล์ไว้ในระบบ</p>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'utilities:index' %}" class="btn btn-app btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg>
+      กลับหน้า Tools
+    </a>
+  </div>
+</div>
+
+<form id="pdf-csrf-form">{% csrf_token %}</form>
+
+<div class="content-card">
+  <div class="pdf-tabs">
+    <button type="button" class="pdf-tab" data-tab="merge">รวมไฟล์</button>
+    <button type="button" class="pdf-tab" data-tab="split">แยกไฟล์/หน้า</button>
+    <button type="button" class="pdf-tab" data-tab="insert">แทรกไฟล์</button>
+    <button type="button" class="pdf-tab" data-tab="delete">ลบหน้า</button>
+    <button type="button" class="pdf-tab" data-tab="lock">ล็อก/ปลดล็อก</button>
+  </div>
+
+  {# ================= MERGE ================= #}
+  <div class="pdf-panel" data-panel="merge">
+    <div class="pdf-op-head">
+      <h3>รวมไฟล์ PDF ตามลำดับที่กำหนด</h3>
+      <p>ลากไฟล์ PDF จาก File Explorer มาวางในรายการด้านล่างได้เลย หรือกดปุ่ม "เพิ่มไฟล์..."<br>
+         จัดลำดับได้โดยลากในรายการด้วยเมาส์ หรือใช้ปุ่มเลื่อนขึ้น/ลง</p>
+    </div>
+
+    <input type="file" id="merge-file-input" accept="application/pdf" multiple hidden>
+    <div class="pdf-workarea">
+      <div class="pdf-listbox" id="merge-listbox">
+        <div class="pdf-listbox-empty" id="merge-listbox-empty">ยังไม่มีไฟล์ที่เพิ่ม<br>ลากไฟล์ PDF มาวางที่นี่ได้</div>
+      </div>
+      <div class="pdf-btnstack">
+        <button type="button" class="btn btn-app btn-ghost" id="merge-add-btn">เพิ่มไฟล์...</button>
+        <button type="button" class="btn btn-app btn-ghost" id="merge-remove-btn">ลบที่เลือก</button>
+        <button type="button" class="btn btn-app btn-ghost" id="merge-clear-btn">ลบทั้งหมด</button>
+        <hr>
+        <button type="button" class="btn btn-app btn-ghost" id="merge-up-btn">↑ เลื่อนขึ้น</button>
+        <button type="button" class="btn btn-app btn-ghost" id="merge-down-btn">↓ เลื่อนลง</button>
+        <button type="button" class="btn btn-app btn-ghost" id="merge-top-btn">ไปบนสุด</button>
+        <button type="button" class="btn btn-app btn-ghost" id="merge-bottom-btn">ไปล่างสุด</button>
+      </div>
+    </div>
+
+    <div class="pdf-footer">
+      <div class="pdf-status-row"><span class="pdf-status-dot" id="merge-status-dot"></span><span id="merge-status-text">ยังไม่มีไฟล์ที่เพิ่ม</span></div>
+      <div class="pdf-progress-track"><div class="pdf-progress-fill" id="merge-progress-fill"></div></div>
+      <div class="pdf-submit-row">
+        <button type="button" class="btn btn-app btn-primary" id="merge-submit-btn" disabled>รวมไฟล์ PDF...</button>
+      </div>
+    </div>
+  </div>
+
+  {# ================= SPLIT ================= #}
+  <div class="pdf-panel" data-panel="split">
+    <div class="pdf-op-head">
+      <h3>แยกไฟล์ / แยกหน้า PDF</h3>
+      <p>เลือกไฟล์ PDF แล้วเลือกวิธีแยก: ทีละหน้า, เฉพาะหน้าที่เลือก, หรือแบ่งเป็นไฟล์ย่อยหลายหน้าต่อไฟล์</p>
+    </div>
+
+    <input type="file" id="split-file-input" accept="application/pdf" hidden>
+    <div class="pdf-filepick">
+      <button type="button" class="btn btn-app btn-ghost" id="split-file-btn">เลือกไฟล์ PDF...</button>
+      <span class="pdf-filepick-name" id="split-file-name" data-dropzone>ยังไม่ได้เลือกไฟล์ (ลากไฟล์ PDF มาวางตรงนี้ได้)</span>
+      <button type="button" class="pdf-filepick-clear" id="split-file-clear" title="ล้างไฟล์ที่เลือก" hidden>&times;</button>
+    </div>
+
+    <div class="pdf-workarea wide-aside">
+      <select class="pdf-pagelist" id="split-pagelist" multiple disabled></select>
+      <div>
+        <div class="pdf-radio-group">
+          <label class="pdf-radio-opt"><input type="radio" name="split-mode" value="all" checked>แยกทุกหน้าเป็นไฟล์เดี่ยว (ทีละหน้า)</label>
+          <label class="pdf-radio-opt"><input type="radio" name="split-mode" value="selected_each">เฉพาะหน้าที่เลือก: แยกทีละหน้า</label>
+          <label class="pdf-radio-opt"><input type="radio" name="split-mode" value="selected_combined">เฉพาะหน้าที่เลือก: รวมเป็นไฟล์เดียว</label>
+          <label class="pdf-radio-opt">
+            <input type="radio" name="split-mode" value="chunks">แบ่งเป็นไฟล์ย่อย (หลายหน้าต่อไฟล์)
+          </label>
+          <div class="pdf-radio-extra">
+            จำนวนหน้าต่อไฟล์: <input class="form-input" type="number" id="split-chunk-size" min="1" value="5" disabled>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หรือระบุช่วงหน้าแทนการเลือกด้วยเมาส์</label>
+          <input class="form-input" type="text" id="split-ranges-input" placeholder="เช่น 1-3,5,8-10">
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-footer">
+      <div class="pdf-status-row"><span class="pdf-status-dot" id="split-status-dot"></span><span id="split-status-text">ยังไม่ได้เลือกไฟล์</span></div>
+      <div class="pdf-progress-track"><div class="pdf-progress-fill" id="split-progress-fill"></div></div>
+      <div class="pdf-submit-row">
+        <button type="button" class="btn btn-app btn-primary" id="split-submit-btn" disabled>เริ่มแยกไฟล์...</button>
+      </div>
+    </div>
+  </div>
+
+  {# ================= INSERT ================= #}
+  <div class="pdf-panel" data-panel="insert">
+    <div class="pdf-op-head">
+      <h3>แทรกไฟล์ PDF เข้าไปในเอกสาร</h3>
+      <p>เลือกไฟล์หลัก แล้วเพิ่มไฟล์ที่จะแทรกเข้าไป โดยกำหนดตำแหน่งที่ต้องการ</p>
+    </div>
+
+    <p class="pdf-step-label">1) ไฟล์หลัก (ไฟล์ต้นฉบับ)</p>
+    <input type="file" id="insert-base-input" accept="application/pdf" hidden>
+    <div class="pdf-filepick">
+      <button type="button" class="btn btn-app btn-ghost" id="insert-base-btn">เลือกไฟล์ PDF...</button>
+      <span class="pdf-filepick-name" id="insert-base-name" data-dropzone>ยังไม่ได้เลือกไฟล์ (ลากไฟล์ PDF มาวางตรงนี้ได้)</span>
+      <button type="button" class="pdf-filepick-clear" id="insert-base-clear" title="ล้างไฟล์ที่เลือก" hidden>&times;</button>
+    </div>
+
+    <p class="pdf-step-label">2) ไฟล์ที่จะแทรก (เรียงตามลำดับที่จะแทรกเข้าไป)</p>
+    <input type="file" id="insert-files-input" accept="application/pdf" multiple hidden>
+    <div class="pdf-workarea">
+      <div class="pdf-listbox" id="insert-listbox">
+        <div class="pdf-listbox-empty" id="insert-listbox-empty">ยังไม่มีไฟล์ที่เพิ่ม<br>ลากไฟล์ PDF มาวางที่นี่ได้</div>
+      </div>
+      <div class="pdf-btnstack">
+        <button type="button" class="btn btn-app btn-ghost" id="insert-add-btn">เพิ่มไฟล์...</button>
+        <button type="button" class="btn btn-app btn-ghost" id="insert-remove-btn">ลบที่เลือก</button>
+        <button type="button" class="btn btn-app btn-ghost" id="insert-clear-btn">ลบทั้งหมด</button>
+        <hr>
+        <button type="button" class="btn btn-app btn-ghost" id="insert-up-btn">↑ เลื่อนขึ้น</button>
+        <button type="button" class="btn btn-app btn-ghost" id="insert-down-btn">↓ เลื่อนลง</button>
+        <button type="button" class="btn btn-app btn-ghost" id="insert-top-btn">ไปบนสุด</button>
+        <button type="button" class="btn btn-app btn-ghost" id="insert-bottom-btn">ไปล่างสุด</button>
+      </div>
+    </div>
+
+    <p class="pdf-step-label" style="margin-top:20px;">3) ตำแหน่งที่จะแทรก</p>
+    <div class="pdf-radio-group">
+      <label class="pdf-radio-opt"><input type="radio" name="insert-mode" value="start">แทรกที่ต้นไฟล์</label>
+      <label class="pdf-radio-opt"><input type="radio" name="insert-mode" value="end" checked>แทรกที่ท้ายไฟล์</label>
+      <label class="pdf-radio-opt">
+        <input type="radio" name="insert-mode" value="custom">แทรกหลังหน้าที่
+      </label>
+      <div class="pdf-radio-extra">
+        <input class="form-input" type="number" id="insert-position" min="0" value="1" disabled>
+      </div>
+    </div>
+
+    <div class="pdf-footer">
+      <div class="pdf-status-row"><span class="pdf-status-dot" id="insert-status-dot"></span><span id="insert-status-text">ยังไม่พร้อม — กรุณาเลือกไฟล์หลักและไฟล์ที่จะแทรก</span></div>
+      <div class="pdf-progress-track"><div class="pdf-progress-fill" id="insert-progress-fill"></div></div>
+      <div class="pdf-submit-row">
+        <button type="button" class="btn btn-app btn-primary" id="insert-submit-btn" disabled>แทรกไฟล์และบันทึกเป็นไฟล์ใหม่...</button>
+      </div>
+    </div>
+  </div>
+
+  {# ================= DELETE PAGES ================= #}
+  <div class="pdf-panel" data-panel="delete">
+    <div class="pdf-op-head">
+      <h3>ลบหน้าที่ไม่ต้องการออกจาก PDF</h3>
+      <p>เลือกไฟล์ PDF แล้วเลือกหน้าที่ต้องการลบ (คลิกเลือกหลายหน้าด้วย Ctrl หรือ Shift)</p>
+    </div>
+
+    <input type="file" id="delete-file-input" accept="application/pdf" hidden>
+    <div class="pdf-filepick">
+      <button type="button" class="btn btn-app btn-ghost" id="delete-file-btn">เลือกไฟล์ PDF...</button>
+      <span class="pdf-filepick-name" id="delete-file-name" data-dropzone>ยังไม่ได้เลือกไฟล์ (ลากไฟล์ PDF มาวางตรงนี้ได้)</span>
+      <button type="button" class="pdf-filepick-clear" id="delete-file-clear" title="ล้างไฟล์ที่เลือก" hidden>&times;</button>
+    </div>
+
+    <div class="pdf-workarea wide-aside">
+      <select class="pdf-pagelist" id="delete-pagelist" multiple disabled></select>
+      <div class="form-group">
+        <label class="form-label">หรือระบุช่วงหน้าที่จะลบ</label>
+        <input class="form-input" type="text" id="delete-pages-input" placeholder="เช่น 2,5,7-9">
+      </div>
+    </div>
+
+    <div class="pdf-footer">
+      <div class="pdf-status-row"><span class="pdf-status-dot" id="delete-status-dot"></span><span id="delete-status-text">ยังไม่ได้เลือกไฟล์</span></div>
+      <div class="pdf-progress-track"><div class="pdf-progress-fill" id="delete-progress-fill"></div></div>
+      <div class="pdf-submit-row">
+        <button type="button" class="btn btn-app btn-primary" id="delete-submit-btn" disabled>ลบหน้าที่เลือกและบันทึกเป็นไฟล์ใหม่...</button>
+      </div>
+    </div>
+  </div>
+
+  {# ================= LOCK / UNLOCK ================= #}
+  <div class="pdf-panel" data-panel="lock">
+    <div class="pdf-op-head">
+      <h3>ล็อก / ปลดล็อกไฟล์ PDF ด้วยรหัสผ่าน</h3>
+    </div>
+
+    <div class="pdf-two-col">
+      <div class="tool-op-panel">
+        <h3>ล็อกไฟล์ (ใส่รหัสผ่านป้องกัน)</h3>
+        <input type="file" id="lock-file-input" accept="application/pdf" hidden>
+        <div class="pdf-filepick">
+          <button type="button" class="btn btn-app btn-ghost" id="lock-file-btn">เลือกไฟล์ PDF...</button>
+          <span class="pdf-filepick-name" id="lock-file-name" data-dropzone>ยังไม่ได้เลือกไฟล์ (ลากไฟล์ PDF มาวางตรงนี้ได้)</span>
+          <button type="button" class="pdf-filepick-clear" id="lock-file-clear" title="ล้างไฟล์ที่เลือก" hidden>&times;</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่านสำหรับเปิดไฟล์</label>
+          <input class="form-input" type="password" id="lock-password" minlength="4">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่านผู้ดูแล <span class="form-label-optional">(ไม่บังคับ)</span></label>
+          <input class="form-input" type="password" id="lock-owner-password">
+        </div>
+        <label class="pdf-checkbox-row"><input type="checkbox" id="lock-show-password">แสดงรหัสผ่าน</label>
+
+        <div class="pdf-status-row"><span class="pdf-status-dot" id="lock-status-dot"></span><span id="lock-status-text">&nbsp;</span></div>
+        <div class="pdf-progress-track"><div class="pdf-progress-fill" id="lock-progress-fill"></div></div>
+        <div class="pdf-submit-row">
+          <button type="button" class="btn btn-app btn-primary" id="lock-submit-btn" disabled>ล็อกไฟล์และบันทึกเป็นไฟล์ใหม่...</button>
+        </div>
+      </div>
+
+      <div class="tool-op-panel">
+        <h3>ปลดล็อกไฟล์ (ใส่รหัสผ่านเดิม)</h3>
+        <input type="file" id="unlock-file-input" accept="application/pdf" hidden>
+        <div class="pdf-filepick">
+          <button type="button" class="btn btn-app btn-ghost" id="unlock-file-btn">เลือกไฟล์ PDF...</button>
+          <span class="pdf-filepick-name" id="unlock-file-name" data-dropzone>ยังไม่ได้เลือกไฟล์ (ลากไฟล์ PDF มาวางตรงนี้ได้)</span>
+          <button type="button" class="pdf-filepick-clear" id="unlock-file-clear" title="ล้างไฟล์ที่เลือก" hidden>&times;</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่านปัจจุบัน</label>
+          <input class="form-input" type="password" id="unlock-password">
+        </div>
+        <label class="pdf-checkbox-row"><input type="checkbox" id="unlock-show-password">แสดงรหัสผ่าน</label>
+
+        <div class="pdf-status-row"><span class="pdf-status-dot" id="unlock-status-dot"></span><span id="unlock-status-text">&nbsp;</span></div>
+        <div class="pdf-progress-track"><div class="pdf-progress-fill" id="unlock-progress-fill"></div></div>
+        <div class="pdf-submit-row">
+          <button type="button" class="btn btn-app btn-primary" id="unlock-submit-btn" disabled>ปลดล็อกและบันทึกเป็นไฟล์ใหม่...</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="pdf-save-modal" id="pdf-save-modal" hidden>
+  <div class="pdf-save-modal-backdrop" id="pdf-save-modal-backdrop"></div>
+  <div class="pdf-save-modal-box">
+    <h4>บันทึกไฟล์</h4>
+    <p class="pdf-save-modal-desc">ดำเนินการเสร็จเรียบร้อยแล้ว — ตั้งชื่อไฟล์ที่ต้องการ แล้วเลือกตำแหน่งที่จะบันทึก</p>
+    <div class="form-group">
+      <label class="form-label">ชื่อไฟล์</label>
+      <input class="form-input" type="text" id="pdf-save-modal-filename">
+    </div>
+    <div class="pdf-save-modal-actions">
+      <button type="button" class="btn btn-app btn-ghost" id="pdf-save-modal-cancel">ยกเลิก</button>
+      <button type="button" class="btn btn-app btn-primary" id="pdf-save-modal-save">บันทึกไฟล์...</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/tools_pdf_edit.js' %}?v={% now 'U' %}"
+        data-page-count-url="{% url 'utilities:pdf_page_count' %}"
+        data-merge-url="{% url 'utilities:pdf_merge' %}"
+        data-split-url="{% url 'utilities:pdf_split' %}"
+        data-delete-url="{% url 'utilities:pdf_delete_pages' %}"
+        data-insert-url="{% url 'utilities:pdf_insert' %}"
+        data-lock-url="{% url 'utilities:pdf_encrypt' %}"
+        data-unlock-url="{% url 'utilities:pdf_decrypt' %}"></script>
+{% endblock %}

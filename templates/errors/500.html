@@ -1,0 +1,6 @@
+{% extends "errors/_error_base.html" %}
+{% block content %}
+{% with error_code="500" error_title="เกิดข้อผิดพลาดในระบบ" error_message="ขออภัย เกิดข้อผิดพลาดที่ไม่คาดคิด ทีมงานได้รับแจ้งแล้วและกำลังดำเนินการแก้ไข" %}
+{{ block.super }}
+{% endwith %}
+{% endblock %}

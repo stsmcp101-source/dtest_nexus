@@ -1,0 +1,17 @@
+<div class="calc-grid">
+  <div>
+    <div class="form-group"><label class="form-label">เวลาผลิตตามแผน (นาที)</label><input class="form-input" type="number" id="oee-planned" value="480" step="any"></div>
+    <div class="form-group"><label class="form-label">เวลาหยุดเครื่อง (นาที)</label><input class="form-input" type="number" id="oee-downtime" value="30" step="any"></div>
+    <div class="form-group"><label class="form-label">Ideal Cycle Time (วินาที/ชิ้น)</label><input class="form-input" type="number" id="oee-ideal-cycle" value="10" step="any"></div>
+    <div class="form-group"><label class="form-label">จำนวนผลิตทั้งหมด (ชิ้น)</label><input class="form-input" type="number" id="oee-total-count" value="2400" step="any"></div>
+    <div class="form-group"><label class="form-label">จำนวนของดี (ชิ้น)</label><input class="form-input" type="number" id="oee-good-count" value="2280" step="any"></div>
+  </div>
+  <div>
+    <div class="calc-result" style="margin-bottom:14px;">
+      <div class="calc-result-label">OEE</div>
+      <div class="calc-result-value" id="oee-result">—</div>
+      <div class="calc-badge-row" id="oee-badge"></div>
+    </div>
+    <div class="unit-result-list" id="oee-breakdown"></div>
+  </div>
+</div>

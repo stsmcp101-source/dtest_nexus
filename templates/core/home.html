@@ -1,0 +1,561 @@
+{% extends "base/public_base.html" %}
+{% load static %}
+
+{% block content %}
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      {% include "components/logo.html" with css_class="logo-mark" grad_id="hexSplitNav" %}
+      <div class="brand-lockup">
+        <span class="brand-word">dTest<span class="dot">.</span><span class="nex">nexus</span></span>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <div class="nav-item">
+        <a href="#modules">Home</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#modules">All Content</a>
+              {% for module in modules %}
+              <a href="{% if module.is_available and module.url_name %}{% url module.url_name %}{% else %}#modules{% endif %}">{{ module.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#standards">Standard</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#standards">Testing STD.</a>
+              {% for std in standards %}
+              {% if std.url %}
+              <a href="{{ std.url }}" target="_blank" rel="noopener">{{ std.name }}</a>
+              {% else %}
+              <a href="#standards">{{ std.name }}</a>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#about">About Us</a>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <a class="mega-title" href="#about">Highlight</a>
+              {% for topic in about_topics %}
+              <a href="#{{ topic.code }}">{{ topic.title_en }}</a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="{% url 'internal:index' %}">DT</a>
+      </div>
+    </nav>
+    <div class="nav-cta">
+      {% if user.is_authenticated %}
+        <a class="btn btn-ghost-light" href="{% if nav.can_view_dashboard %}{% url 'dashboard:index' %}{% else %}{% url 'core:home' %}{% endif %}" style="padding:10px 20px;font-size:13.5px;">{{ user.get_full_name|default:user.username }}</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost-light" style="padding:10px 20px;font-size:13.5px;">ออกจากระบบ</button>
+        </form>
+      {% else %}
+        <a class="btn btn-ghost-light" href="{% url 'login' %}" style="padding:10px 20px;font-size:13.5px;">เข้าสู่ระบบ</a>
+      {% endif %}
+      <button class="nav-toggle" aria-label="menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero hero-full">
+  <div class="hero-bg" aria-hidden="true">
+    {# อัปโหลด/แทนที่พื้นหลังได้จากเมนู "ตั้งค่าพื้นหลังหน้าแรก" ถ้าไม่ได้อัปโหลดไว้ จะใช้ไฟล์ static/img/home/hero-bg.* แทนโดยอัตโนมัติ #}
+    {% if hero_bg_image_url %}
+    <div class="hero-bg-image" style="background-image:url('{{ hero_bg_image_url }}')"></div>
+    {% endif %}
+    {% if hero_bg_video_url %}
+    <video class="hero-bg-video" autoplay muted loop playsinline>
+      <source src="{{ hero_bg_video_url }}" type="{{ hero_bg_video_type }}">
+    </video>
+    {% endif %}
+  </div>
+
+  <a class="hero-scroll" href="#stats">
+    <span>SCROLL</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</section>
+
+<section id="stats" class="stats-section">
+  <div class="stats-strip wrap">
+    <div class="stats-row">
+      <div class="stat"><b>143</b><span>พนักงานในแผนก</span></div>
+      <div class="stat"><b>{{ modules|length }}</b><span>เมนูหลัก</span></div>
+      <div class="stat"><b>{{ document_count }}</b><span>เอกสารในระบบ</span></div>
+      <div class="stat"><b>{{ total_visits }}</b><span>ยอดเข้าใช้งานเว็บไซต์</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="modules">
+  <div class="wrap">
+    <div class="modules-panel">
+      <div class="modules-head">
+        <h2>เมนูทั้งหมดของ dTest.nexus</h2>
+        <p>เลือกเข้าใช้งานเมนูที่ตรงกับงานของคุณ ทุกเมนูเชื่อมข้อมูลถึงกันเพื่อให้ภาพรวมองค์กรครบถ้วนในที่เดียว</p>
+      </div>
+
+      <div class="modules-strip">
+        {% for module in modules %}
+        <a class="strip-panel {% if not module.is_available %}is-disabled{% endif %} {% if module.background_image %}has-bg-image{% endif %}"
+           href="{% if module.is_available and module.url_name %}{% url module.url_name %}{% else %}#{% endif %}">
+          {% if module.background_image %}
+            {% if module.background_image_processed %}
+              <div class="strip-bg-image" style="background-image:url('{{ module.background_image_processed.url }}')"></div>
+            {% else %}
+              <div class="strip-bg-image" style="background-image:url('{{ module.background_image.url }}')"></div>
+            {% endif %}
+            <div class="strip-bg-overlay"></div>
+          {% else %}
+            <svg class="strip-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">{{ module.icon_svg_path|default:"<circle cx='12' cy='12' r='9'/>"|safe }}</svg>
+          {% endif %}
+          <div class="strip-tag mono">{{ forloop.counter|stringformat:"02d" }} / {{ module.short_tag }}</div>
+          <div class="strip-content">
+            <h3>{{ module.name }}</h3>
+            <p>{{ module.description }}</p>
+            <span class="go">{% if module.is_available %}เปิดใช้งาน →{% else %}เร็ว ๆ นี้{% endif %}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap">
+    <div class="section-head about-head">
+      <h2>เกี่ยวกับ <span class="accent">dTest.nexus</span></h2>
+      <p>dTest.nexus — ศูนย์กลางข้อมูล ประกาศ และแนวทางปฏิบัติงานทดสอบ ของแผนก Development Test</p>
+    </div>
+
+    <div class="about-carousel">
+      <button type="button" class="about-car-nav prev" id="aboutCarPrev" aria-label="ก่อนหน้า">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="about-car-viewport" id="aboutCarViewport">
+        <div class="about-car-track" id="aboutCarTrack">
+          {% for topic in about_topics %}
+          <div class="about-car-card" id="{{ topic.code }}" data-index="{{ forloop.counter0 }}" data-code="{{ topic.code }}">
+            <div class="about-car-cover {{ topic.code }}{% if topic.image %} has-image{% endif %}"
+                 {% if topic.image %}data-href="{{ topic.image.url }}" data-cap="{{ topic.title_en }}"{% endif %}>
+              {% if topic.code == "policy" %}
+                <img src="{% static 'img/home/about/policy.webp' %}?v=3" alt="Policy illustration">
+              {% elif topic.code == "vision" %}
+                <img src="{% static 'img/home/about/vision.webp' %}?v=3" alt="Vision illustration">
+              {% elif topic.code == "objective" %}
+                <img src="{% static 'img/home/about/objective.webp' %}?v=3" alt="Objective illustration">
+              {% elif topic.code == "kpi" %}
+                <img src="{% static 'img/home/about/kpi.webp' %}?v=3" alt="KPI illustration">
+              {% elif topic.code == "contact" %}
+                <img src="{% static 'img/home/about/contact.webp' %}?v=3" alt="Contact illustration">
+              {% else %}
+                <svg viewBox="0 0 320 200" fill="none"><circle cx="160" cy="100" r="9" fill="#fff"/></svg>
+              {% endif %}
+              {% if topic.image %}
+              <span class="about-car-zoom-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                ดูภาพจริง
+              </span>
+              {% endif %}
+            </div>
+            <div class="about-car-body">
+              <h3>{{ topic.title_en }}{% if topic.title_th %} <small>{{ topic.title_th }}</small>{% endif %}</h3>
+              <p>{{ topic.body|linebreaksbr }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="button" class="about-car-nav next" id="aboutCarNext" aria-label="ถัดไป">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="about-car-dots" id="aboutCarDots">
+      {% for topic in about_topics %}
+      <button type="button" class="about-car-dot" data-index="{{ forloop.counter0 }}" aria-label="{{ topic.title_en }}"></button>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section id="standards">
+  <div class="wrap">
+    <div class="standards">
+      <div class="standards-head">
+        <h2>บทพิสูจน์แห่งคุณภาพ ที่ <span class="accent">มีมาตรฐาน รองรับ</span></h2>
+        <p>dTest.nexus อ้างอิงมาตรฐานการทดสอบระดับสากล เพื่อยืนยันความแม่นยำและตอกย้ำความน่าเชื่อถือของผลการทดสอบ</p>
+      </div>
+      <div class="pillars">
+        {# Managed in Django Admin → Core → มาตรฐาน (Standards) #}
+        {% for std in standards %}
+        {% if std.url %}
+        <a class="pillar-logo" href="{{ std.url }}" target="_blank" rel="noopener" title="{{ std.description|default:std.name }}">
+          <img src="{{ std.logo.url }}" alt="{{ std.name }}">
+        </a>
+        {% else %}
+        <span class="pillar-logo" title="{{ std.description|default:std.name }}">
+          <img src="{{ std.logo.url }}" alt="{{ std.name }}">
+        </span>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>Internal</h2>
+      <p>For DT section only</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{% url 'internal:index' %}">เข้าหน้า Internal</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="foot-giant">dTest.nexus</div>
+  <div class="foot-bottom">© {% now "Y" %} dTest.nexus — by.Development Test · สงวนลิขสิทธิ์</div>
+</footer>
+
+<div class="about-lightbox" id="aboutLightbox" role="dialog" aria-modal="true" aria-label="ดูภาพขนาดใหญ่">
+  <button type="button" class="about-lightbox-close" id="aboutLightboxClose" aria-label="ปิด">&times;</button>
+  <div class="about-lightbox-zoomctl">
+    <button type="button" id="aboutLightboxZoomOut" aria-label="ซูมออก">&minus;</button>
+    <button type="button" id="aboutLightboxZoomReset" aria-label="รีเซ็ตซูม">100%</button>
+    <button type="button" id="aboutLightboxZoomIn" aria-label="ซูมเข้า">+</button>
+  </div>
+  <div class="about-lightbox-imgwrap" id="aboutLightboxImgwrap">
+    <img src="" alt="" id="aboutLightboxImg">
+  </div>
+  <div class="about-lightbox-cap" id="aboutLightboxCap"></div>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('aboutLightbox');
+  var wrap = document.getElementById('aboutLightboxImgwrap');
+  var img = document.getElementById('aboutLightboxImg');
+  var cap = document.getElementById('aboutLightboxCap');
+  var zoomInBtn = document.getElementById('aboutLightboxZoomIn');
+  var zoomOutBtn = document.getElementById('aboutLightboxZoomOut');
+  var zoomResetBtn = document.getElementById('aboutLightboxZoomReset');
+
+  var MIN_SCALE = 1, MAX_SCALE = 4, STEP = 0.6;
+  var scale = 1, baseWidth = 0, baseHeight = 0;
+
+  function setImageSize() {
+    if (!baseWidth) return;
+    img.style.width = (baseWidth * scale) + 'px';
+    img.style.height = (baseHeight * scale) + 'px';
+  }
+
+  function measureBase() {
+    img.style.width = ''; img.style.height = '';
+    var r = img.getBoundingClientRect();
+    baseWidth = r.width; baseHeight = r.height;
+  }
+
+  function applyScale(newScale, originClientX, originClientY) {
+    newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+    if (newScale === scale || !baseWidth) return;
+
+    var wrapRect = wrap.getBoundingClientRect();
+    var ox = originClientX != null ? originClientX - wrapRect.left : wrapRect.width / 2;
+    var oy = originClientY != null ? originClientY - wrapRect.top : wrapRect.height / 2;
+    var pointX = wrap.scrollLeft + ox, pointY = wrap.scrollTop + oy;
+    var ratio = newScale / scale;
+
+    scale = newScale;
+    setImageSize();
+    wrap.scrollLeft = pointX * ratio - ox;
+    wrap.scrollTop = pointY * ratio - oy;
+
+    wrap.classList.toggle('is-zoomed', scale > 1);
+    zoomResetBtn.textContent = Math.round(scale * 100) + '%';
+  }
+
+  function resetZoom() {
+    scale = 1;
+    img.style.width = ''; img.style.height = '';
+    wrap.classList.remove('is-zoomed');
+    wrap.scrollLeft = 0; wrap.scrollTop = 0;
+    zoomResetBtn.textContent = '100%';
+  }
+
+  function open(src, caption) {
+    resetZoom();
+    img.src = src;
+    cap.textContent = caption;
+    box.classList.add('is-open');
+    img.onload = measureBase;
+  }
+  function close() {
+    box.classList.remove('is-open');
+    img.removeAttribute('src');
+    resetZoom();
+  }
+
+  var dragging = false, dragMoved = false, dragStartX = 0, dragStartY = 0, scrollStartX = 0, scrollStartY = 0;
+
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('a[data-lightbox]');
+    if (link) {
+      e.preventDefault();
+      open(link.getAttribute('href'), link.getAttribute('data-lightbox'));
+      return;
+    }
+    if (!box.classList.contains('is-open')) return;
+    if (e.target === box || e.target === wrap || e.target.id === 'aboutLightboxClose') { close(); return; }
+    if (e.target === img) {
+      if (dragMoved) { dragMoved = false; return; }
+      applyScale(scale > 1 ? 1 : 2.5, e.clientX, e.clientY);
+    }
+  });
+
+  zoomInBtn.addEventListener('click', function () { applyScale(scale + STEP); });
+  zoomOutBtn.addEventListener('click', function () { applyScale(scale - STEP); });
+  zoomResetBtn.addEventListener('click', resetZoom);
+
+  wrap.addEventListener('wheel', function (e) {
+    if (!img.src) return;
+    e.preventDefault();
+    applyScale(scale + (e.deltaY < 0 ? STEP : -STEP), e.clientX, e.clientY);
+  }, { passive: false });
+
+  wrap.addEventListener('mousedown', function (e) {
+    if (scale <= 1 || e.target !== img) return;
+    dragging = true; dragMoved = false;
+    dragStartX = e.clientX; dragStartY = e.clientY;
+    scrollStartX = wrap.scrollLeft; scrollStartY = wrap.scrollTop;
+    wrap.classList.add('is-dragging');
+  });
+  window.addEventListener('mousemove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - dragStartX, dy = e.clientY - dragStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
+    wrap.scrollLeft = scrollStartX - dx;
+    wrap.scrollTop = scrollStartY - dy;
+  });
+  window.addEventListener('mouseup', function () { dragging = false; wrap.classList.remove('is-dragging'); });
+
+  var pinchStartDist = 0, pinchStartScale = 1;
+  function touchDist(t) { var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY; return Math.sqrt(dx * dx + dy * dy); }
+  function touchMid(t) { return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 }; }
+  wrap.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2) { pinchStartDist = touchDist(e.touches); pinchStartScale = scale; }
+  }, { passive: true });
+  wrap.addEventListener('touchmove', function (e) {
+    if (e.touches.length === 2 && pinchStartDist) {
+      e.preventDefault();
+      var mid = touchMid(e.touches);
+      applyScale(pinchStartScale * (touchDist(e.touches) / pinchStartDist), mid.x, mid.y);
+    }
+  }, { passive: false });
+
+  document.addEventListener('keydown', function (e) {
+    if (!box.classList.contains('is-open')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === '+' || e.key === '=') applyScale(scale + STEP);
+    else if (e.key === '-') applyScale(scale - STEP);
+  });
+
+  window.AboutLightbox = { open: open, close: close };
+})();
+</script>
+
+<script>
+(function () {
+  var viewport = document.getElementById('aboutCarViewport');
+  if (!viewport) return;
+  var track = document.getElementById('aboutCarTrack');
+  var cards = Array.prototype.slice.call(track.querySelectorAll('.about-car-card'));
+  var dots = Array.prototype.slice.call(document.querySelectorAll('.about-car-dot'));
+  var prevBtn = document.getElementById('aboutCarPrev');
+  var nextBtn = document.getElementById('aboutCarNext');
+  var currentIndex = 0;
+
+  function layout() {
+    var n = cards.length;
+    cards.forEach(function (card, i) {
+      var offset = i - currentIndex;
+      if (offset > n / 2) offset -= n;
+      if (offset < -n / 2) offset += n;
+      var abs = Math.abs(offset);
+      var tx, scale, rotate, opacity, pointer;
+      if (abs > 2) {
+        tx = offset * 40; scale = .6; rotate = 0; opacity = 0; pointer = 'none';
+      } else {
+        tx = offset * 130;
+        scale = 1 - abs * 0.14;
+        rotate = offset * 8;
+        opacity = abs === 0 ? 1 : (abs === 1 ? .82 : .5);
+        pointer = 'auto';
+      }
+      card.style.transform = 'translateX(' + tx + '%) scale(' + scale + ') rotate(' + rotate + 'deg)';
+      card.style.zIndex = String(10 - abs);
+      card.style.opacity = String(opacity);
+      card.style.pointerEvents = pointer;
+      card.classList.toggle('is-active', offset === 0);
+    });
+    dots.forEach(function (d, i) { d.classList.toggle('is-active', i === currentIndex); });
+  }
+
+  function goTo(i) {
+    var n = cards.length;
+    currentIndex = ((i % n) + n) % n;
+    layout();
+    startAutoplay(); // any navigation (auto or manual) restarts the countdown
+  }
+
+  // Auto-advance one card at a time, slowly — paused on hover, while
+  // dragging, while the lightbox is open, while the tab is hidden, and
+  // entirely for prefers-reduced-motion.
+  var AUTOPLAY_MS = 5000;
+  var autoplayTimer = null;
+  var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function stopAutoplay() {
+    if (autoplayTimer) { clearInterval(autoplayTimer); autoplayTimer = null; }
+  }
+  function startAutoplay() {
+    stopAutoplay();
+    if (reducedMotion) return;
+    autoplayTimer = setInterval(function () {
+      var lb = document.getElementById('aboutLightbox');
+      if (lb && lb.classList.contains('is-open')) return;
+      goTo(currentIndex + 1);
+    }, AUTOPLAY_MS);
+  }
+  viewport.addEventListener('mouseenter', stopAutoplay);
+  viewport.addEventListener('mouseleave', startAutoplay);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) stopAutoplay(); else startAutoplay();
+  });
+
+  prevBtn.addEventListener('click', function () { goTo(currentIndex - 1); });
+  nextBtn.addEventListener('click', function () { goTo(currentIndex + 1); });
+  dots.forEach(function (d, i) { d.addEventListener('click', function () { goTo(i); }); });
+
+  // Click/tap vs. drag-to-navigate is resolved entirely here, from the pointer
+  // events themselves, rather than via a separate native "click" listener on
+  // each card — setPointerCapture() below can keep the browser from ever
+  // dispatching that click on the card, silently swallowing the tap.
+  var dragging = false, dragStartX = 0, dragDeltaX = 0, downTarget = null;
+  viewport.addEventListener('pointerdown', function (e) {
+    dragging = true; dragStartX = e.clientX; dragDeltaX = 0; downTarget = e.target;
+    stopAutoplay();
+    try { viewport.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  viewport.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    dragDeltaX = e.clientX - dragStartX;
+  });
+  viewport.addEventListener('pointerup', function () {
+    if (!dragging) return;
+    dragging = false;
+    if (Math.abs(dragDeltaX) > 40) {
+      goTo(currentIndex + (dragDeltaX < 0 ? 1 : -1));
+    } else if (downTarget) {
+      var card = downTarget.closest ? downTarget.closest('.about-car-card') : null;
+      if (card) {
+        var i = cards.indexOf(card);
+        if (i !== currentIndex) {
+          goTo(i);
+        } else {
+          var cover = downTarget.closest('.about-car-cover.has-image');
+          if (cover) window.AboutLightbox.open(cover.dataset.href, cover.dataset.cap);
+        }
+      }
+    }
+    dragDeltaX = 0; downTarget = null;
+    startAutoplay();
+  });
+  viewport.addEventListener('pointercancel', function () { dragging = false; dragDeltaX = 0; downTarget = null; startAutoplay(); });
+
+  // Opens the given card's real photo, if it has one — used both on initial
+  // load and whenever the "About Us" nav dropdown jumps here by hash, e.g.
+  // clicking "Contact" should show its attached image immediately.
+  function openCardImage(index) {
+    var cover = cards[index].querySelector('.about-car-cover.has-image');
+    if (cover) window.AboutLightbox.open(cover.dataset.href, cover.dataset.cap);
+  }
+
+  var hashCode = (location.hash || '').replace('#', '');
+  var hashIndex = cards.findIndex(function (c) { return c.dataset.code === hashCode; });
+  currentIndex = hashIndex >= 0 ? hashIndex : 0;
+  layout();
+  if (hashIndex >= 0) openCardImage(hashIndex);
+  startAutoplay();
+
+  // The nav dropdown links to these same #code anchors — the browser already
+  // scrolls there natively, this just also brings that card to the front of
+  // the carousel (and opens its photo) for a click made after the page is
+  // already loaded, since that doesn't re-run the block above.
+  window.addEventListener('hashchange', function () {
+    var code = (location.hash || '').replace('#', '');
+    var idx = cards.findIndex(function (c) { return c.dataset.code === code; });
+    if (idx < 0) return;
+    goTo(idx);
+    openCardImage(idx);
+  });
+})();
+</script>
+
+<script>
+(function () {
+  var header = document.querySelector('header.nav');
+  if (!header) return;
+  function syncHeader() {
+    header.classList.toggle('is-visible', window.scrollY > 40);
+  }
+  window.addEventListener('scroll', syncHeader, { passive: true });
+  syncHeader();
+})();
+</script>
+
+<script>
+(function () {
+  document.querySelectorAll('.nav-item > a').forEach(function (link) {
+    link.addEventListener('pointermove', function (event) {
+      var rect = link.getBoundingClientRect();
+      link.style.setProperty('--liquid-x', (event.clientX - rect.left) + 'px');
+      link.style.setProperty('--liquid-y', (event.clientY - rect.top) + 'px');
+    }, { passive: true });
+    link.addEventListener('pointerleave', function () {
+      link.style.setProperty('--liquid-x', '50%');
+      link.style.setProperty('--liquid-y', '50%');
+    }, { passive: true });
+  });
+  document.querySelectorAll('.mega-col a').forEach(function (item) {
+    item.addEventListener('pointermove', function (event) {
+      var rect = item.getBoundingClientRect();
+      item.style.setProperty('--item-glass-x', (event.clientX - rect.left) + 'px');
+      item.style.setProperty('--item-glass-y', (event.clientY - rect.top) + 'px');
+    }, { passive: true });
+    item.addEventListener('pointerleave', function () {
+      item.style.setProperty('--item-glass-x', '50%');
+      item.style.setProperty('--item-glass-y', '50%');
+    }, { passive: true });
+  });
+})();
+</script>
+{% endblock %}
