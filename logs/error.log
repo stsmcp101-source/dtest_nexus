@@ -1,0 +1,77 @@
+[2026-09-23 10:38:02,390] ERROR django.request log: Internal Server Error: /datasources/connections/
+Traceback (most recent call last):
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.05\apps\permissions\decorators.py", line 39, in _wrapped
+    return view_func(request, *args, **kwargs)
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.05\apps\datasources\views.py", line 24, in connection_list
+    @login_required
+               ^^^^
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: datasources/connection_list.html
+[2026-09-23 19:02:27,360] ERROR django.request log: Internal Server Error: /training-history/api/employee/create/
+Traceback (most recent call last):
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.05\apps\permissions\decorators.py", line 39, in _wrapped
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\santisuk.l\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\django\views\decorators\http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.05\apps\training_history\views.py", line 78, in api_employee_create
+    return JsonResponse({"ok": True, "employee": employee.as_dict()})
+                                                 ~~~~~~~~~~~~~~~~^^
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.05\apps\training_history\models.py", line 60, in as_dict
+    "workStart": self.work_start_date.isoformat() if self.work_start_date else "",
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'isoformat'. Did you mean: 'format'?
+[2026-09-25 21:23:45,294] ERROR django.request log: Internal Server Error: /utilities/engineering/saturation-temp/data/
+Traceback (most recent call last):
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/apps/core/middleware.py", line 21, in __call__
+    self._record(request, response)
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/apps/core/middleware.py", line 36, in _record
+    module = ModuleDefinition.objects.filter(url_name=view_name, is_active=True).first()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1059, in first
+    for obj in queryset[:1]:
+               ~~~~~~~~^^^^
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1886, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 93, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1560, in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/santisooklertsiri/Downloads/Code/dtest_nexus V1.06/.venv/lib/python3.12/site-packages/django/test/testcases.py", line 168, in __call__
+    raise DatabaseOperationForbidden(self.message)
+django.test.testcases.DatabaseOperationForbidden: Database queries to 'default' are not allowed in SimpleTestCase subclasses. Either subclass TestCase or TransactionTestCase to ensure proper test isolation or add 'default' to tests.test_ph_diagram.PHDiagramTests.databases to silence this failure.
+[2026-09-29 10:34:31,983] ERROR django.request log: Internal Server Error: /utilities/engineering/saturation-temp/data/
+Traceback (most recent call last):
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.06\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.06\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.06\apps\utilities\views.py", line 418, in ph_diagram_data
+    from .ph_diagram import calculate
+  File "D:\12.Code\5.dtest_nexus\dtest_nexus V1.06\apps\utilities\ph_diagram.py", line 10, in <module>
+    import CoolProp as CP
+ModuleNotFoundError: No module named 'CoolProp'
