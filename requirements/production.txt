@@ -1,0 +1,2 @@
+-r ../requirements.txt
+mssql-django>=1.3

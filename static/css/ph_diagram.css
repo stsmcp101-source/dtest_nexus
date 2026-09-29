@@ -1,0 +1,107 @@
+.ph-panel{width:100%;min-width:0;font-family:Inter,Arial,sans-serif;color:#243b53}
+.ph-panel svg{width:100%;height:auto;display:block;background:#fff;border-radius:12px}
+.ph-status{font-size:12px;line-height:1.7;background:#eef6fb;border:1px solid #d5e5f0;border-radius:8px;padding:9px 12px;margin-bottom:8px;min-height:40px}
+.ph-status.is-warning{background:#fff8e8;border-color:#efcc83;color:#865617}
+.ph-legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:11px;font-weight:600;padding:8px 12px;background:#f8fafc;border-radius:8px}
+.ph-states{overflow-x:auto;margin-top:12px}
+.ph-states table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ph-states th{background:#edf2f7;color:#52677c;text-align:left;padding:8px}
+.ph-states td{border-bottom:1px solid #e5edf4;padding:8px}
+.ph-note{font-size:10px;color:#64748b;line-height:1.7;margin-top:10px}
+.sat-main{width:100%;max-width:none!important;margin-left:0!important;margin-right:0!important;padding-left:18px!important;padding-right:18px!important;box-sizing:border-box}
+
+/* Tool heading follows the shared layout used by the other Tools pages. */
+.sat-breadcrumb{font-size:13px;line-height:1.4;color:#7b8796;padding-top:2px}
+.sat-breadcrumb a{color:inherit;text-decoration:none}
+.sat-breadcrumb a:hover{color:#1d4ed8}
+.sat-tool-head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:5px 0 28px;border-bottom:1px solid #e1e7ee}
+.sat-tool-head-left{display:flex;align-items:center;gap:18px;min-width:0}
+.sat-tool-icon{display:grid;place-items:center;width:64px;height:64px;flex:0 0 64px;background:#fff;border:1px solid #dbe2ea;border-radius:16px;overflow:hidden;color:#2563eb;font-size:22px;font-weight:900}
+.sat-tool-icon img{width:100%;height:100%;padding:8px;object-fit:contain;box-sizing:border-box}
+.sat-tool-icon svg{width:34px;height:34px;color:#203f62}
+.sat-tool-title{margin:0;color:#203f62;font-size:36px;line-height:1.1;font-weight:900;letter-spacing:-.025em}
+.sat-tool-description{margin:12px 0 0;color:#69778a;font-size:15px;line-height:1.45;font-weight:400}
+.sat-page-controls{display:flex;align-items:center;justify-content:flex-start;gap:12px}
+.sat-mode-tabs{display:inline-flex;align-items:center;padding:4px;background:#fff;border:1px solid #d8e0ea;border-radius:9px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.sat-mode-tab{border:0;border-radius:6px;padding:7px 14px;background:transparent;color:#526277;font-size:13px;font-weight:800;line-height:1.25;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s}
+.sat-mode-tab:hover{background:#f1f5f9;color:#1e293b}
+.sat-mode-tab.is-active{background:#2563eb;color:#fff;box-shadow:0 1px 3px rgba(37,99,235,.28)}
+.sat-export-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:35px;padding:0 13px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;color:#334155;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04);transition:border-color .15s,background .15s,color .15s}
+.sat-export-button:hover{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
+.sat-clear-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:35px;padding:0 12px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;color:#64748b;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04);transition:border-color .15s,background .15s,color .15s}
+.sat-clear-button:hover{background:#fff7ed;border-color:#fdba74;color:#c2410c}
+.export-preview-open{overflow:hidden}
+.sat-export-modal[hidden]{display:none}
+.sat-export-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:stretch;justify-content:center;padding:20px;background:rgba(15,23,42,.72);backdrop-filter:blur(3px)}
+.sat-export-dialog{display:flex;flex-direction:column;width:min(1500px,100%);min-height:0;background:#eef2f7;border-radius:14px;overflow:hidden;box-shadow:0 24px 70px rgba(15,23,42,.35)}
+.sat-export-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 18px;background:#fff;border-bottom:1px solid #dbe3ec}
+.sat-export-dialog-head h2{margin:0;color:#183b60;font-size:18px;line-height:1.3;font-weight:900}
+.sat-export-dialog-head p{margin:3px 0 0;color:#718096;font-size:12px}
+.sat-export-dialog-actions{display:flex;align-items:center;gap:8px}
+.sat-preview-cancel,.sat-preview-save{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 14px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer}
+.sat-preview-cancel{background:#fff;border:1px solid #cbd5e1;color:#475569}
+.sat-preview-save{background:#2563eb;border:1px solid #2563eb;color:#fff;box-shadow:0 2px 5px rgba(37,99,235,.25)}
+.sat-preview-cancel:hover{background:#f8fafc}.sat-preview-save:hover{background:#1d4ed8}
+.sat-export-preview-stage{display:flex;align-items:center;justify-content:center;min-height:0;flex:1;padding:18px;overflow:auto}
+.sat-export-preview-page{position:relative;width:min(1320px,100%,calc((100vh - 130px)*1.414));aspect-ratio:297/210;flex:0 0 auto;background:#fff;box-shadow:0 4px 22px rgba(15,23,42,.22);overflow:hidden}
+.sat-export-preview-report{position:absolute;left:14px;top:14px;width:1320px;transform-origin:top left;color:#1e293b}
+.sat-export-preview-report>.excel-header{margin-bottom:14px}
+.sat-export-preview-mode{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:14px!important}
+@media(max-width:680px){
+  .sat-export-modal{padding:8px}
+  .sat-export-dialog-head{align-items:flex-start;padding:11px 12px}
+  .sat-export-dialog-head p{display:none}
+  .sat-export-dialog-actions{gap:5px}
+  .sat-preview-cancel,.sat-preview-save{height:34px;padding:0 9px;font-size:11px}
+  .sat-export-preview-stage{padding:8px;align-items:flex-start}
+  .sat-export-preview-page{width:100%;min-width:620px}
+}
+.sat-back-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:0 19px;background:#fff;border:1px solid #d8e0ea;border-radius:11px;color:#344256;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 1px 2px rgba(15,23,42,.02);transition:border-color .15s,background .15s,color .15s;white-space:nowrap}
+.sat-back-link:hover{background:#f8fafc;border-color:#b8c5d4;color:#1d4ed8}
+@media(max-width:640px){
+  .sat-tool-head{align-items:flex-start;padding-bottom:20px}
+  .sat-tool-head-left{gap:12px}
+  .sat-tool-icon{width:52px;height:52px;flex-basis:52px;border-radius:13px}
+  .sat-tool-title{font-size:25px}
+  .sat-tool-description{font-size:12px;margin-top:6px}
+  .sat-back-link{min-height:40px;padding:0 11px;font-size:12px}
+}
+@media(max-width:430px){.sat-mode-tab{padding:7px 10px;font-size:12px}.sat-tool-description{display:none}.sat-tool-head{gap:10px}.sat-tool-title{font-size:21px}}
+
+/* Add Gauge: compact spreadsheet layout matching the reference panel */
+.add-gauge-compact{grid-template-columns:140px minmax(270px,1fr);gap:26px;align-items:start;width:min(100%,570px)}
+.add-gauge-column{display:grid;grid-template-rows:20px 40px 40px;gap:8px;min-width:0}
+.add-gauge-title{font-size:13px;line-height:20px;font-weight:900;text-transform:uppercase;white-space:nowrap}
+.add-gauge-title--temperature{color:#1d4ed8}
+.add-gauge-title--pressure{color:#c51d1d}
+.add-gauge-box{width:112px;height:40px;padding:0 10px;background:#fff;border:2px solid #1e293b;border-radius:4px;color:#111827;text-align:center;font-size:16px;font-weight:800;line-height:36px;outline:none;box-sizing:border-box;font-variant-numeric:tabular-nums}
+input.add-gauge-box{line-height:normal;transition:border-color .15s,box-shadow .15s}
+input.add-gauge-box:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.18)}
+.add-gauge-output{display:block;cursor:default}
+.add-gauge-row{display:grid;grid-template-columns:112px minmax(116px,1fr);gap:9px;align-items:center;cursor:text}
+.add-gauge-row span{font-size:12px;font-weight:900;color:#172033;white-space:nowrap}
+@media(max-width:560px){
+  .add-gauge-compact{grid-template-columns:112px minmax(210px,1fr);gap:18px;overflow-x:auto;padding-bottom:2px}
+  .add-gauge-row{grid-template-columns:112px minmax(105px,1fr);gap:8px}
+  .add-gauge-title{font-size:12px}
+  .add-gauge-row span{font-size:11px}
+}
+
+@media print{
+  @page{size:A4 landscape;margin:5mm}
+  html,body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{padding-bottom:0!important}
+  body.print-report main{max-width:none!important;width:1320px!important;margin:0 auto!important;padding:0!important;zoom:.755}
+  body.print-report .sat-breadcrumb,
+  body.print-report .sat-tool-head,
+  body.print-report .sat-page-controls,
+  body.print-report .sat-info-footer{display:none!important}
+  body.print-report .sat-export-modal{display:none!important}
+  body.print-report #coolingViewContainer,
+  body.print-report #heatingViewContainer{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:14px!important;break-inside:avoid}
+  body.print-report .excel-header{break-inside:avoid;margin-bottom:14px}
+  body.print-report .ph-panel svg{max-height:390px}
+  body.print-report input{color:#0f172a!important;opacity:1!important}
+  body.print-report .shadow-sm{box-shadow:none!important}
+  body.print-report{overflow:hidden!important}
+}
